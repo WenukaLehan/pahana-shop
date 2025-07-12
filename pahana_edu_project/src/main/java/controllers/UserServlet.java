@@ -25,8 +25,7 @@ public class UserServlet extends HttpServlet {
     private static final long serialVersionUID = 1L;
     private UserModel userModel = new UserModel();
     
-    //public static final String ACCOUNT_SID = "SK370ce50be6477051653df4c0a9678f9f";
-    //public static final String AUTH_TOKEN = "wtWjNpeQ41ZysU9tiz4PZRKtgY468zvZ";
+ 
 
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
