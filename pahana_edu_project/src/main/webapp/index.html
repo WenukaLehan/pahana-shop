@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pahana EDU | Loading</title>
+    <link rel="icon" href="./images/icont.png" type="image/x-icon">
+    <!-- Google Fonts for better typography -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Roboto:wght@300;400&display=swap" rel="stylesheet">
+    
+    <style>
+    @charset "UTF-8";
+
+/* --- General & Body Styles for Loading Screen --- */
+body {
+    font-family: 'Roboto', sans-serif;
+    height: 100vh;
+    overflow: hidden;
+    margin: 0;
+    /* Matching background from the login page's brand section */
+    background: linear-gradient(to top right, #23272b, #4a525a);
+}
+
+/* --- Keyframe Animations --- */
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes text-pop-in {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes rotateBook {
+    0% { transform: rotateY(25deg); }
+    50% { transform: rotateY(-25deg); }
+    100% { transform: rotateY(25deg); }
+}
+
+/* --- Loading Screen Container --- */
+.loading-screen {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    height: 100%;
+    animation: fadeIn 1s ease-in-out;
+    transition: opacity 0.5s ease-out; /* For fade-out effect */
+}
+
+.loading-screen.fade-out {
+    opacity: 0;
+}
+
+.loading-content {
+    text-align: center;
+    color: white;
+}
+
+/* --- Brand Text Styling --- */
+.brand-text {
+    animation: text-pop-in 1.2s ease-out 0.5s both;
+}
+
+.brand-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 4rem;
+    font-weight: 700;
+    color: #ffffff;
+    text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.5);
+    margin: 0;
+}
+
+.brand-subtitle {
+    font-size: 1.25rem;
+    font-weight: 300;
+    color: rgba(255, 255, 255, 0.8);
+    margin-top: 5px;
+}
+
+/* --- 3D Rotating Book (Copied from login for consistency) --- */
+.book-container {
+    perspective: 1000px;
+    margin-bottom: 30px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 300px; /* Give container a fixed height */
+}
+
+.book {
+    width: 200px;
+    height: 280px;
+    position: relative;
+    transform-style: preserve-3d;
+    transform: rotateY(25deg);
+    animation: rotateBook 12s ease-in-out infinite;
+    transition: transform 0.5s ease;
+}
+
+.book-cover {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    background-color: #dc3545; /* Crimson Red */
+    border-radius: 4px 8px 8px 4px;
+    transform: translateZ(20px);
+    box-shadow: 10px 10px 30px rgba(0, 0, 0, 0.3);
+    border-left: 3px solid #f8d7da;
+}
+
+.book-cover::before {
+    content: 'Pahana';
+    position: absolute;
+    top: 40px;
+    left: 20px;
+    font-family: 'Playfair Display', serif;
+    color: #ffc107; /* Gold */
+    font-size: 24px;
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+}
+
+.book-cover::after {
+    content: '';
+    position: absolute;
+    bottom: 20px;
+    left: 20px;
+    right: 20px;
+    height: 2px;
+    background: #ffc107;
+}
+
+.book-spine {
+    position: absolute;
+    width: 40px;
+    height: 100%;
+    background-color: #a71d2a;
+    transform: rotateY(-90deg) translateX(-20px);
+    transform-origin: center left;
+    border-radius: 4px 0 0 4px;
+}
+
+/* --- Loading Bar Styling --- */
+.loading-bar {
+    width: 300px;
+    max-width: 80%;
+    height: 6px;
+    background-color: rgba(255, 255, 255, 0.2);
+    border-radius: 3px;
+    margin: 40px auto 0;
+    overflow: hidden;
+    animation: text-pop-in 1.2s ease-out 0.8s both;
+}
+
+.loading-progress {
+    width: 0%;
+    height: 100%;
+    background-color: #ffc107; /* Gold color */
+    border-radius: 3px;
+    transition: width 0.2s linear;
+}
+
+/* --- Responsive Design --- */
+@media (max-width: 768px) {
+    .brand-title {
+        font-size: 3rem;
+    }
+    .brand-subtitle {
+        font-size: 1rem;
+    }
+    .book {
+        transform: scale(0.8) rotateY(25deg);
+    }
+    .book-container{
+        height: 250px;
+    }
+}
+    
+    </style>
+</head>
+<body>
+    
+    <!-- Loading Screen -->
+    <div class="loading-screen" id="loadingScreen">
+        <div class="loading-content">
+            <!-- 3D Rotating Book Animation -->
+            <div class="book-container">
+                <div class="book">
+                    <div class="book-cover"></div>
+                    <div class="book-spine"></div>
+                </div>
+            </div>
+            
+            <!-- Brand Text -->
+            <div class="brand-text">
+                <h1 class="brand-title">Pahana EDU</h1>
+                <p class="brand-subtitle">Unlock a world of Knowladge</p>
+            </div>
+
+            <!-- Loading Bar -->
+            <div class="loading-bar">
+                <div class="loading-progress" id="loadingProgress"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const loadingScreen = document.getElementById('loadingScreen');
+            const loadingProgress = document.getElementById('loadingProgress');
+            
+            // Simulate loading progress
+            let progress = 0;
+            const interval = setInterval(() => {
+                // Add a random amount to progress for a more organic feel
+                progress += Math.random() * 15;
+                
+                if (progress >= 100) {
+                    progress = 100;
+                    loadingProgress.style.width = progress + '%';
+                    clearInterval(interval);
+                    
+                    // Wait for progress bar to fill, then fade out and redirect
+                    setTimeout(() => {
+                        loadingScreen.classList.add('fade-out');
+                    }, 500); // Short delay after reaching 100%
+                    
+                    setTimeout(() => {
+                        // Redirect to the login page
+                        window.location.href = "Login.jsp";
+                    }, 1000); // Wait for fade-out animation to complete
+                }
+                
+                loadingProgress.style.width = progress + '%';
+            }, 200); // Interval time in milliseconds
+        });
+    </script>
+</body>
+</html>
