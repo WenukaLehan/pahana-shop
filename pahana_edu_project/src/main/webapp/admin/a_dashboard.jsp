@@ -4,6 +4,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+     <link rel="icon" href="../images/icont.png" type="image/x-icon">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard UI</title>
     <link rel="stylesheet" href="../css/a_dashboard.css">
@@ -23,7 +24,12 @@
             };
 
             const loadContent = (page) => {
-                const url = `${page}.jsp`;
+            	
+            	if (!page || page.trim() === "") {
+                    console.error('Invalid page name provided:', page);
+                    return;
+                }
+                const url = "" + page + ".jsp";
                 const title = pageTitles[page] || "Dashboard";
 
                 pageContent.style.opacity = '0';
@@ -68,10 +74,10 @@
                     this.classList.add('active');
 
                     const page = this.getAttribute('data-page');
-                    if (page) {
+                    if (page && page.trim() !== "") {
                         loadContent(page);
                     } else {
-                        console.error('Navigation item is missing a "data-page" attribute.');
+                        console.error('Navigation item is missing a valid "data-page" attribute.');
                     }
                 });
             });
