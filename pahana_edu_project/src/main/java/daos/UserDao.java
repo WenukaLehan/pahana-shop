@@ -1,10 +1,10 @@
-package models;
+package daos;
 
-import daos.User;
 import helper.DbCon;
 import helper.EmailSender;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
+import models.User;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -14,7 +14,7 @@ import java.util.Random;
 
 //import org.mindrot.jbcrypt.BCrypt;
 
-public class UserModel {
+public class UserDao {
 
     public User loginUser(String username, String password) throws SQLException, ClassNotFoundException {
         try (Connection con = DbCon.getConnection()) {
