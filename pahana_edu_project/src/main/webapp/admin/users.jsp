@@ -20,11 +20,12 @@
     }
 
     .users-container {
-        padding: 20px;
+        padding:10px;
         background: var(--background-gradient);
         min-height: 100vh;
         font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
         color: var(--text-primary);
+        border-radius: 15px;
     }
 
     .users-header {
@@ -655,12 +656,20 @@
 </div>
 
 <script>
+
+document.addEventListener("DOMContentLoaded", function () {
     if (typeof initUserManagement === "function") {
         initUserManagement();
     } else {
         const script = document.createElement('script');
         script.src = '../js/users.js';
-        script.onload = () => initUserManagement();
+        script.onload = () => {
+            if (typeof initUserManagement === "function") {
+                initUserManagement();
+            }
+        };
         document.body.appendChild(script);
     }
+});
+
 </script>

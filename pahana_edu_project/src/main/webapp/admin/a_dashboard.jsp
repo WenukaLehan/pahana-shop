@@ -6,6 +6,7 @@
     <meta charset="UTF-8">
      <link rel="icon" href="../images/icont.png" type="image/x-icon">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
     <title>Dashboard UI</title>
     <link rel="stylesheet" href="../css/a_dashboard.css">
 
@@ -48,6 +49,79 @@
                             pageContent.innerHTML = html;
                             pageContent.style.opacity = '1';
                             pageTitle.style.opacity = '1';
+                            
+                         	// Re-initialize users.js after content is loaded
+	                         if (page === 'users') {
+	                            if (typeof initUserManagement === "function") {
+	                                initUserManagement();
+	                            } else {
+	                                const script = document.createElement('script');
+	                                script.src = '../js/users.js';
+	                                script.onload = () => {
+	                                    if (typeof initUserManagement === "function") {
+	                                        initUserManagement();
+	                                    }
+	                                };
+	                                document.body.appendChild(script);
+	                            }
+	                         }
+	                         else if (page === 'books') {
+                                if (typeof initBookManagement === "function") {
+                                    initBookManagement();
+                                } else {
+                                    const script = document.createElement('script');
+                                    script.src = '../js/books.js';
+                                    script.onload = () => {
+                                        if (typeof initBookManagement === "function") {
+                                            initBookManagement();
+                                        }
+                                    };
+                                    document.body.appendChild(script);
+                                }
+	                         }
+                         	                                else if (page === 'cart') {
+                                    if (typeof initCartManagement === "function") {
+                                        initCartManagement();
+                                    } else {
+                                        const script = document.createElement('script');
+                                        script.src = '../js/cart.js';
+                                        script.onload = () => {
+                                            if (typeof initCartManagement === "function") {
+                                                initCartManagement();
+                                            }
+                                        };
+                                        document.body.appendChild(script);
+                                    }
+                                }
+                                else if (page === 'reports') {
+                                    if (typeof initReportManagement === "function") {
+                                        initReportManagement();
+                                    } else {
+                                        const script = document.createElement('script');
+                                        script.src = '../js/reports.js';
+                                        script.onload = () => {
+                                            if (typeof initReportManagement === "function") {
+                                                initReportManagement();
+                                            }
+                                        };
+                                        document.body.appendChild(script);
+                                    }
+                                }
+                                else if (page === 'settings') {
+                                    if (typeof initSettingsManagement === "function") {
+                                        initSettingsManagement();
+                                    } else {
+                                        const script = document.createElement('script');
+                                        script.src = '../js/settings.js';
+                                        script.onload = () => {
+                                            if (typeof initSettingsManagement === "function") {
+                                                initSettingsManagement();
+                                            }
+                                        };
+                                        document.body.appendChild(script);
+                                    }
+                                }
+                            
                         }, 200);
                     })
                     .catch(error => {
@@ -137,7 +211,8 @@
     <div class="main-content">
         <div class="header">
             <div></div>
-            <div class="user-avatar">
+            <div class="panel-title" id="pageTitle">User Management</div>
+            <div class="user1-avatar">
                 <svg viewBox="0 0 24 24">
                     <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 
                         1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 
@@ -145,9 +220,9 @@
                 </svg>
             </div>
         </div>
+        
 
         <div class="content-panel" id="contentPanel">
-            <div class="panel-title" id="pageTitle"></div>
             <div class="panel-content" id="pageContent">
                 <jsp:include page="users.jsp" />
             </div>

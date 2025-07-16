@@ -205,6 +205,10 @@ function initUserManagement() {
 
     // Initial render
     renderUsers();
+	const searchInput = document.getElementById('searchInput');
+	        searchInput.addEventListener('input', function() {
+	           searchUsers;
+	        });
 
     // Make functions globally available
     window.viewUser = viewUser;
