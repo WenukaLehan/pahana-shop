@@ -183,9 +183,9 @@
     }
 
     .user-role {
-        color: var(--secondary-color);
+        color: var(--primary-color);
         font-size: 14px;
-        font-weight: 500;
+        font-weight: 700;
         margin-bottom: 15px;
         text-align: center;
         text-transform: uppercase;
@@ -204,15 +204,17 @@
     }
 
     .status-active {
-        background: rgba(139, 69, 19, 0.3);
+        background:linear-gradient(55deg, rgba(255, 255, 255, 0.6), rgba(211, 255, 145, 11));
         color: var(--secondary-color);
         border: 1px solid var(--glass-border);
+        box-shadow: 2px 8px 20px rgba(0, 0, 0, 0.3);
     }
 
     .status-inactive {
-        background: rgba(31, 5, 2, 0.3);
+        background: linear-gradient(55deg, rgba(255, 255, 255, 0.6), rgba(255, 145, 145, 11));
         color: var(--primary-color);
         border: 1px solid var(--glass-border);
+        box-shadow: 2px 8px 20px rgba(0, 0, 0, 0.3);
     }
 
     .user-actions {
@@ -233,18 +235,18 @@
     }
 
     .btn-view {
-        background: var(--glass-background);
+    background: linear-gradient(55deg, var(--glass-background), rgba(147, 153, 155, 0.8));
         color: var(--text-primary);
         border: 1px solid var(--glass-border);
     }
 
     .btn-edit {
-        background: linear-gradient(45deg, var(--secondary-color), rgba(133, 72, 7, 0.8));
+        background: linear-gradient(55deg, var(--secondary-color), rgba(5, 90, 117, 0.8));
         color: var(--text-primary);
     }
 
     .btn-delete {
-        background: linear-gradient(45deg, var(--primary-color), rgba(31, 5, 2, 0.8));
+        background: linear-gradient(45deg, var(--primary-color), red);
         color: var(--text-primary);
     }
 
@@ -570,7 +572,7 @@
 <div class="users-container">
     <div class="users-header">
         <div class="search-container">
-            <input type="text" class="search-input" placeholder="Search users..." id="searchInput">
+           <input type="text" class="search-input" placeholder="Search users..." id="searchInput" oninput="searchUsers()">
             <button class="btn btn-search" onclick="searchUsers()">Search</button>
         </div>
         <button class="btn btn-primary" onclick="openAddUserModal()">Add New User</button>
