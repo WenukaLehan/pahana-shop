@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Bill Receipt</title>
+    <style>
+        :root {
+            --primary-color: rgba(31, 5, 2, 1);
+            --secondary-color: rgba(133, 72, 7, 1);
+            --glass-background: rgba(255, 255, 255, 0.31);
+            --glass-border: rgba(139, 69, 19, 0.3);
+            --text-primary: white;
+            --text-secondary: rgba(255, 255, 255, 0.8);
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(270deg, rgba(133, 72, 7, 1) 0%, rgba(31, 5, 2, 1) 73%);
+            color: var(--text-primary);
+            padding: 20px;
+            margin: 0;
+        }
+
+        .bill-container {
+            background: var(--glass-background);
+            border: 1px solid var(--glass-border);
+            padding: 30px;
+            border-radius: 15px;
+            max-width: 600px;
+            margin: 0 auto;
+            backdrop-filter: blur(20px);
+        }
+
+        .bill-header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .bill-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+
+        .bill-table th, .bill-table td {
+            padding: 10px;
+            text-align: left;
+            border-bottom: 1px solid var(--glass-border);
+        }
+
+        .total-section {
+            text-align: right;
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        /* Hidden data holders */
+        .hidden-data {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Hidden elements for data simulation -->
+    <div class="hidden-data">
+        <span id="invoiceNumber">INV-20250717</span>
+        <input type="number" id="amountPaid" value="100.00">
+    </div>
+
+    <div class="bill-container" id="billContent">
+        <!-- Bill content will be populated by JavaScript -->
+    </div>
+
+    <script>
+        // Sample cart data (replace this with dynamic data if needed)
+        const cart = [
+            { id: 101, name: "Item A", qty: 2, price: 20.00, total: 40.00 },
+            { id: 102, name: "Item B", qty: 1, price: 35.00, total: 35.00 },
+            { id: 103, name: "Item C", qty: 3, price: 5.00, total: 15.00 }
+        ];
+
+        function generateBillHTML() {
+            const invoiceNumber = document.getElementById('invoiceNumber').textContent;
+            const total = cart.reduce((sum, item) => sum + item.total, 0);
+            const paid = parseFloat(document.getElementById('amountPaid').value) || 0;
+            const balance = paid - total;
+
+            let html = `
+                <div class="bill-header">
+                    <h2>Invoice: ${invoiceNumber}</h2>
+                    <p>Date: ${new Date().toLocaleDateString()}</p>
+                </div>
+                <table class="bill-table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Item Name</th>
+                            <th>Quantity</th>
+                            <th>Unit Price</th>
+                            <th>Total Price</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+
+            cart.forEach(item => {
+                html += `
+                    <tr>
+                        <td>${item.id}</td>
+                        <td>${item.name}</td>
+                        <td>${item.qty}</td>
+                        <td>$${item.price.toFixed(2)}</td>
+                        <td>$${item.total.toFixed(2)}</td>
+                    </tr>
+                `;
+            });
+
+            html += `
+                    </tbody>
+                </table>
+                <div class="total-section">
+                    <p>Total: $${total.toFixed(2)}</p>
+                    <p>Amount Paid: $${paid.toFixed(2)}</p>
+                    <p>Balance: $${balance.toFixed(2)}</p>
+                </div>
+            `;
+
+            return html;
+        }
+
+        // Ensure the script runs after DOM is ready
+        window.onload = () => {
+            document.getElementById('billContent').innerHTML = generateBillHTML();
+        };
+    </script>
+</body>
+</html>
