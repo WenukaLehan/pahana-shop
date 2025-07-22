@@ -54,7 +54,7 @@ document.addEventListener('DOMContentLoaded', function () {
                         users: { src: '../js/users.js', init: 'initUserManagement' },
                         books: { src: '../js/books.js', init: 'initBookManagement' },
                         cart: { src: '../js/cart.js', init: 'initPurchaseManagement' }, // Corrected init function name
-                        reports: { src: '../js/reports.js', init: 'initReportManagement' },
+                        reports: { src: '../js/reports.js', init: 'initReportsManagement' },
                         settings: { src: '../js/settings.js', init: 'initSettingsManagement' }
                     };
 

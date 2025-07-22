@@ -9,6 +9,7 @@
     <title>Dashboard UI</title>
     <link rel="stylesheet" href="../css/a_dashboard.css">
     <script src="../js/a_dashboard.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
     <div class="navigation">
