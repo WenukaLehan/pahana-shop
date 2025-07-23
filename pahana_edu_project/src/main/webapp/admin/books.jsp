@@ -105,6 +105,17 @@
         transform: var(--hover-transform);
     }
 
+    .btn-category {
+        background: linear-gradient(45deg, #3498db, #2980b9);
+        color: var(--text-primary);
+        box-shadow: 0 8px 32px rgba(52, 152, 219, 0.3);
+    }
+
+    .btn-category:hover {
+        transform: var(--hover-transform);
+        box-shadow: 0 12px 40px rgba(52, 152, 219, 0.4);
+    }
+
     .books-grid {
         display: grid;
         grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
@@ -463,6 +474,173 @@
         border: 1px solid var(--glass-border);
     }
 
+    /* Category Table Styles */
+    .category-table-section {
+        margin-top: 20px;
+    }
+
+    .table-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 20px;
+        background: linear-gradient(90deg, #802a0f, #032831);
+        color: var(--text-primary);
+        flex-wrap: wrap;
+        gap: 15px;
+        border-radius: var(--border-radius);
+    }
+
+    .table-header h3 {
+        margin: 0;
+        font-size: 18px;
+        font-weight: 600;
+    }
+
+    .table-controls {
+        display: flex;
+        gap: 15px;
+        align-items: center;
+        flex-wrap: wrap;
+    }
+
+    .category-table {
+        overflow-x: auto;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: var(--border-radius);
+        padding: 15px;
+    }
+
+    .category-table table {
+        width: 100%;
+        border-collapse: collapse;
+        table-layout: fixed;
+    }
+
+    .category-table th {
+        background: linear-gradient(90deg, #6d2610, #021e24);
+        color: var(--text-primary);
+        padding: 12px 10px;
+        text-align: left;
+        font-weight: 600;
+        font-size: 13px;
+        position: sticky;
+        top: 0;
+        z-index: 10;
+    }
+
+    .category-table td {
+        padding: 12px 10px;
+        border-bottom: 1px solid var(--glass-border);
+        font-size: 13px;
+        word-wrap: break-word;
+        color: var(--text-primary);
+        font-weight: 500;
+    }
+
+    .category-table tr:nth-child(even) {
+        background-color: rgba(255, 255, 255, 0.05);
+    }
+
+    .category-table tr:hover {
+        background-color: rgba(255, 255, 255, 0.2);
+    }
+
+    .status-badge {
+        padding: 4px 8px;
+        border-radius: 4px;
+        font-size: 11px;
+        font-weight: 600;
+        text-transform: uppercase;
+    }
+
+    .status-active {
+        background: rgba(39, 174, 96, 0.2);
+        color: #27ae60;
+    }
+
+    .status-inactive {
+        background: rgba(231, 76, 60, 0.2);
+        color: #e74c3c;
+    }
+
+    .action-icon {
+        width: 16px;
+        height: 16px;
+        cursor: pointer;
+        transition: all var(--transition-speed) ease;
+    }
+
+    .action-icon:hover {
+        transform: scale(1.2);
+    }
+
+    .table-footer {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 15px 20px;
+        background: rgba(255, 255, 255, 0.05);
+        border-top: 1px solid var(--glass-border);
+        flex-wrap: wrap;
+        gap: 15px;
+    }
+
+    .pagination-info {
+        color: var(--text-secondary);
+        font-size: 13px;
+    }
+
+    .pagination-controls {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .pagination-btn {
+        background: var(--glass-background);
+        border: 1px solid var(--glass-border);
+        padding: 8px 12px;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 13px;
+        transition: all var(--transition-speed) ease;
+        color: var(--text-primary);
+    }
+
+    .pagination-btn:hover:not(:disabled) {
+        background: rgba(255, 255, 255, 0.4);
+        color: var(--text-primary);
+    }
+
+    .pagination-btn:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+
+    .pagination-numbers {
+        display: flex;
+        gap: 4px;
+    }
+
+    .page-number {
+        background: var(--glass-background);
+        border: 1px solid var(--glass-border);
+        padding: 8px 12px;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 13px;
+        transition: all var(--transition-speed) ease;
+        color: var(--text-primary);
+        min-width: 36px;
+    }
+
+    .page-number.active,
+    .page-number:hover {
+        background: rgba(255, 255, 255, 0.4);
+        color: var(--text-primary);
+    }
+
     /* Responsive Design */
     @media (max-width: 768px) {
         .books-container {
@@ -539,7 +717,10 @@
             <input type="text" class="search-input" placeholder="Search books..." id="searchInput" oninput="searchBooks()">
             <button class="btn btn-search" onclick="searchBooks()">Search</button>
         </div>
-        <button class="btn btn-primary" onclick="openAddBookModal()">Add New Book</button>
+        <div>
+            <button class="btn btn-primary" onclick="openAddBookModal()">Add New Book</button>
+            <button class="btn btn-category" onclick="openCategoryModal()">Manage Categories</button>
+        </div>
     </div>
 
     <div class="books-grid" id="booksGrid">
@@ -552,7 +733,7 @@
     <div class="modal-content">
         <div class="modal-header">
             <h3 class="modal-title" id="modalTitle">Add New Book</h3>
-            <button class="close-btn" onclick="closeModal('bookModal')">&times;</button>
+            <button class="close-btn" onclick="closeModal('bookModal')">×</button>
         </div>
         <form id="bookForm">
             <div class="form-group">
@@ -588,7 +769,7 @@
     <div class="modal-content">
         <div class="modal-header">
             <h3 class="modal-title">Book Details</h3>
-            <button class="close-btn" onclick="closeModal('viewModal')">&times;</button>
+            <button class="close-btn" onclick="closeModal('viewModal')">×</button>
         </div>
         <div id="bookDetails">
             <!-- Book details will be populated here -->
@@ -608,21 +789,64 @@
     </div>
 </div>
 
-<script>
+<!-- Category Management Modal -->
+<div class="modal" id="categoryModal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3 class="modal-title">Manage Categories</h3>
+            <button class="close-btn" onclick="closeModal('categoryModal')">×</button>
+        </div>
+        <form id="categoryForm">
+            <div class="form-group">
+                <label class="form-label">Category Name</label>
+                <input type="text" class="form-input" id="categoryName" placeholder="Enter category name" required>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Description</label>
+                <textarea class="form-input form-textarea" id="categoryDescription" placeholder="Enter category description"></textarea>
+            </div>
+            <div class="modal-actions">
+                <button type="button" class="btn btn-cancel" onclick="closeModal('categoryModal')">Cancel</button>
+                <button type="submit" class="btn btn-primary" id="addCategoryBtn">Add Category</button>
+            </div>
+        </form>
+        <div class="category-table-section">
+            <div class="table-header">
+                <h3>Category List</h3>
+                <div class="table-controls">
+                    <input type="text" placeholder="Search categories..." class="search-input" id="categorySearch" oninput="searchCategories()">
+                </div>
+            </div>
+            <div class="category-table">
+                <table id="categoryTable">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Description</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="categoryTableBody">
+                        <tr class="empty-row">
+                            <td colspan="4" style="text-align: center; color: var(--text-muted); padding: 40px;">
+                                No categories available. Add a new category above.
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="table-footer">
+                <div class="pagination-info">
+                    <span id="categoryPaginationInfo">Showing 0 to 0 of 0 entries</span>
+                </div>
+                <div class="pagination-controls">
+                    <button class="pagination-btn" id="categoryPrevBtn" disabled>Previous</button>
+                    <div class="pagination-numbers" id="categoryPaginationNumbers"></div>
+                    <button class="pagination-btn" id="categoryNextBtn" disabled>Next</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 
-document.addEventListener("DOMContentLoaded", function () {
-    if (typeof initBookManagement === "function") {
-        initBookManagement();
-    } else {
-        const script = document.createElement('script');
-        script.src = '../js/books.js';
-        script.onload = () => {
-            if (typeof initBookManagement === "function") {
-                initBookManagement();
-            }
-        };
-        document.body.appendChild(script);
-    }
-});
-
-</script>

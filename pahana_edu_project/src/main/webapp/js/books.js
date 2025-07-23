@@ -25,13 +25,38 @@ let books = [
     }
 ];
 
+let categories = [
+    {
+        id: 1,
+        name: "Fiction",
+        description: "Fictional literature and novels",
+        status: "active"
+    },
+    {
+        id: 2,
+        name: "Non-Fiction",
+        description: "Factual and informative books",
+        status: "active"
+    },
+    {
+        id: 3,
+        name: "Science Fiction",
+        description: "Speculative fiction with futuristic themes",
+        status: "active"
+    }
+];
+
 let currentEditId = null;
 let deleteBookId = null;
+let currentCategoryPage = 1;
+const entriesPerPage = 5;
 
 function initBookManagement() {
     renderBooks();
     document.getElementById('bookForm').addEventListener('submit', handleFormSubmit);
+    document.getElementById('categoryForm').addEventListener('submit', handleCategoryFormSubmit);
     window.addEventListener('click', handleOutsideClick);
+    updateCategoryTable();
 }
 
 function renderBooks(booksToRender = books) {
@@ -62,6 +87,12 @@ function openAddBookModal() {
     document.getElementById('bookForm').reset();
     currentEditId = null;
     openModal('bookModal');
+}
+
+function openCategoryModal() {
+    document.getElementById('categoryForm').reset();
+    openModal('categoryModal');
+    updateCategoryTable();
 }
 
 function editBook(id) {
@@ -155,7 +186,7 @@ function handleFormSubmit(e) {
         books[bookIndex] = { ...books[bookIndex], ...bookData };
     } else {
         const newBook = {
-            id: Math.max(...books.map(b => b.id)) + 1,
+            id: Math.max(...books.map(b => b.id), 0) + 1,
             ...bookData
         };
         books.push(newBook);
@@ -173,3 +204,115 @@ function handleOutsideClick(event) {
         }
     });
 }
+
+function handleCategoryFormSubmit(e) {
+    e.preventDefault();
+    
+    const categoryData = {
+        id: categories.length ? Math.max(...categories.map(c => c.id)) + 1 : 1,
+        name: document.getElementById('categoryName').value,
+        description: document.getElementById('categoryDescription').value,
+        status: 'active'
+    };
+    
+    categories.push(categoryData);
+    updateCategoryTable();
+    document.getElementById('categoryForm').reset();
+}
+
+function updateCategoryTable(searchTerm = '') {
+    const categoryTableBody = document.getElementById('categoryTableBody');
+    const filteredCategories = categories.filter(cat => 
+        cat.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (cat.description && cat.description.toLowerCase().includes(searchTerm.toLowerCase()))
+    );
+
+    const startIndex = (currentCategoryPage - 1) * entriesPerPage;
+    const paginatedCategories = filteredCategories.slice(startIndex, startIndex + entriesPerPage);
+    categoryTableBody.innerHTML = '';
+
+    if (filteredCategories.length === 0) {
+        categoryTableBody.innerHTML = `
+            <tr class="empty-row">
+                <td colspan="4" style="text-align: center; color: var(--text-muted); padding: 40px;">
+                    No categories available. Add a new category above.
+                </td>
+            </tr>
+        `;
+        updateCategoryPagination(filteredCategories.length);
+        return;
+    }
+
+    paginatedCategories.forEach(cat => {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+            <td>${cat.name}</td>
+            <td>${cat.description || 'No description'}</td>
+            <td><span class="status-badge status-${cat.status}">${cat.status.charAt(0).toUpperCase() + cat.status.slice(1)}</span></td>
+            <td>
+                <svg class="action-icon ${cat.status === 'active' ? 'deactivate' : 'activate'}" data-id="${cat.id}" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="${cat.status === 'active' ? '#e74c3c' : '#27ae60'}">
+                    <path d="${cat.status === 'active' ? 'M12 2C6.47 2 2 6.47 2 12s4.47 10 10 10 10-4.47 10-10S17.53 2 12 2zm5 13.59L15.59 17 12 13.41 8.41 17 7 15.59 10.59 12 7 8.41 8.41 7 12 10.59 15.59 7 17 8.41 13.41 12 17 15.59z' : 'M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2zm5 11h-4v4h-2v-4H7v-2h4V7h2v4h4v2z'}"/>
+                </svg>
+            </td>
+        `;
+        categoryTableBody.appendChild(row);
+    });
+
+    updateCategoryPagination(filteredCategories.length);
+
+    document.querySelectorAll('.action-icon.deactivate, .action-icon.activate').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            const id = parseInt(e.target.closest('.action-icon').dataset.id);
+            const category = categories.find(cat => cat.id === id);
+            if (category) {
+                category.status = category.status === 'active' ? 'inactive' : 'active';
+                updateCategoryTable(document.getElementById('categorySearch').value);
+            }
+        });
+    });
+}
+
+function updateCategoryPagination(totalItems) {
+    const totalPages = Math.ceil(totalItems / entriesPerPage);
+    const categoryPaginationInfo = document.getElementById('categoryPaginationInfo');
+    const categoryPrevBtn = document.getElementById('categoryPrevBtn');
+    const categoryNextBtn = document.getElementById('categoryNextBtn');
+    const categoryPaginationNumbers = document.getElementById('categoryPaginationNumbers');
+
+    categoryPaginationInfo.textContent = `Showing ${Math.min((currentCategoryPage - 1) * entriesPerPage + 1, totalItems)} to ${Math.min(currentCategoryPage * entriesPerPage, totalItems)} of ${totalItems} entries`;
+    categoryPrevBtn.disabled = currentCategoryPage === 1;
+    categoryNextBtn.disabled = currentCategoryPage === totalPages || totalPages === 0;
+
+    categoryPaginationNumbers.innerHTML = '';
+    for (let i = 1; i <= totalPages; i++) {
+        const pageBtn = document.createElement('button');
+        pageBtn.classList.add('page-number');
+        if (i === currentCategoryPage) pageBtn.classList.add('active');
+        pageBtn.textContent = i;
+        pageBtn.addEventListener('click', () => {
+            currentCategoryPage = i;
+            updateCategoryTable(document.getElementById('categorySearch').value);
+        });
+        categoryPaginationNumbers.appendChild(pageBtn);
+    }
+}
+
+function searchCategories() {
+    const searchTerm = document.getElementById('categorySearch').value;
+    currentCategoryPage = 1;
+    updateCategoryTable(searchTerm);
+}
+
+// Global Event Listeners
+window.searchBooks = searchBooks;
+window.openAddBookModal = openAddBookModal;
+window.openCategoryModal = openCategoryModal;
+window.closeModal = closeModal;
+window.viewBook = viewBook;
+window.editBook = editBook;
+window.deleteBook = deleteBook;
+window.confirmDelete = confirmDelete;
+window.searchCategories = searchCategories;
+
+// Initialize
+initBookManagement();

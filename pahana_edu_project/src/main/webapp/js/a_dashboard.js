@@ -1,134 +1,147 @@
-document.addEventListener('DOMContentLoaded', function () {
+document.addEventListener('DOMContentLoaded', () => {
     const navItems = document.querySelectorAll('.list');
     const pageTitle = document.getElementById('pageTitle');
     const pageContent = document.getElementById('pageContent');
+    const userAvatar = document.querySelector('.user1-avatar');
+    const userProfileContainer = document.getElementById('userProfileContainer');
 
     const pageTitles = {
-        users: "User Management",
-        books: "Book Management",
-        cart: "Shopping Cart",
-        reports: "System Reports",
-        settings: "System Settings"
+        users: 'User Management',
+        books: 'Book Management',
+        cart: 'Shopping Cart',
+        reports: 'System Reports',
+        settings: 'System Settings'
     };
 
-    /**
-     * Loads content for a given page into the main content area.
-     * It also handles dynamic loading of associated JavaScript files.
-     * @param {string} page - The name of the page to load (e.g., 'users', 'cart').
-     */
     const loadContent = (page) => {
-        // Validate the page name to prevent errors
-        if (!page || page.trim() === "") {
+        if (!page || page.trim() === '') {
             console.error('Invalid page name provided:', page);
             return;
         }
 
-        const url = page + ".jsp"; // Construct the URL for the JSP page
-        const title = pageTitles[page] || "Dashboard"; // Get the display title for the page
+        const url = `${page}.jsp`;
+        const title = pageTitles[page] || 'Dashboard';
 
-        // Apply fade-out effect before loading new content
         pageContent.style.opacity = '0';
         pageTitle.style.opacity = '0';
 
-        // Fetch the content of the JSP page
-        fetch(url, { signal: AbortSignal.timeout(5000) }) // Add a timeout for the fetch request
+        fetch(url, { signal: AbortSignal.timeout(5000) })
             .then(response => {
-                // Check if the response was successful
                 if (!response.ok) {
                     throw new Error(`Page not found: ${response.statusText} (Status: ${response.status})`);
                 }
-                return response.text(); // Return the HTML content as text
+                return response.text();
             })
             .then(html => {
-                // After a short delay for the fade-out effect, update the content and title
                 setTimeout(() => {
-                    pageTitle.textContent = title; // Set the new page title
-                    pageContent.innerHTML = html; // Inject the fetched HTML content
-                    pageContent.style.opacity = '1'; // Fade in the new content
-                    pageTitle.style.opacity = '1'; // Fade in the new title
+                    pageTitle.textContent = title;
+                    pageContent.innerHTML = html;
+                    pageContent.style.opacity = '1';
+                    pageTitle.style.opacity = '1';
 
-                    // Dynamically load and initialize page-specific JavaScript
-                    // This ensures that the correct script is loaded and its initialization function is called.
-                    // It also handles cases where the script might already be present or needs to be reloaded.
                     const scriptMap = {
                         users: { src: '../js/users.js', init: 'initUserManagement' },
                         books: { src: '../js/books.js', init: 'initBookManagement' },
-                        cart: { src: '../js/cart.js', init: 'initPurchaseManagement' }, // Corrected init function name
+                        cart: { src: '../js/cart.js', init: 'initPurchaseManagement' },
                         reports: { src: '../js/reports.js', init: 'initReportsManagement' },
                         settings: { src: '../js/settings.js', init: 'initSettingsManagement' }
                     };
 
                     const pageScript = scriptMap[page];
                     if (pageScript) {
-                        // Check if the initialization function already exists (e.g., if script was loaded before)
-                        if (typeof window[pageScript.init] === "function") {
-                            window[pageScript.init](); // Call the existing function
+                        if (typeof window[pageScript.init] === 'function') {
+                            window[pageScript.init]();
                         } else {
-                            // If not, remove any existing script tag for this page to prevent duplicates
                             const existingScript = document.querySelector(`script[src="${pageScript.src}"]`);
                             if (existingScript) {
                                 existingScript.remove();
                             }
 
-                            // Create and append a new script tag
                             const script = document.createElement('script');
                             script.src = pageScript.src;
                             script.onload = () => {
-                                // Once the script is loaded, call its initialization function
-                                if (typeof window[pageScript.init] === "function") {
+                                if (typeof window[pageScript.init] === 'function') {
                                     window[pageScript.init]();
                                 } else {
                                     console.error(`Initialization function '${pageScript.init}' not found after loading ${pageScript.src}`);
                                 }
                             };
                             script.onerror = () => console.error(`Failed to load ${pageScript.src}`);
-                            document.body.appendChild(script); // Append to body to ensure it runs after DOM is ready
+                            document.body.appendChild(script);
                         }
                     }
-                }, 300); // Delay for fade-out transition
+                }, 300);
             })
             .catch(error => {
-                // Handle errors during fetch (e.g., network issues, page not found)
                 console.error('Failed to fetch page:', error);
                 setTimeout(() => {
-                    pageTitle.textContent = "Error"; // Set error title
+                    pageTitle.textContent = 'Error';
                     pageContent.innerHTML = `
                         <div class="welcome-message" style="text-align: center; padding: 20px; color: #fff; background-color: rgba(255, 0, 0, 0.5); border-radius: 10px;">
                             <h3 style="color: white; margin-bottom: 10px;">Content Not Found</h3>
                             <p>Could not load content for '${page}'. Please ensure the file '${page}.jsp' exists and is accessible.</p>
                             <p>Error details: ${error.message}</p>
                         </div>`;
-                    pageContent.style.opacity = '1'; // Fade in error message
-                    pageTitle.style.opacity = '1'; // Fade in error title
-                }, 300); // Delay for fade-out transition
+                    pageContent.style.opacity = '1';
+                    pageTitle.style.opacity = '1';
+                }, 300);
             });
     };
 
-    // Add click event listeners to all navigation items
     navItems.forEach(item => {
-        item.addEventListener('click', function (e) {
-            e.preventDefault(); // Prevent default link behavior
+        item.addEventListener('click', (e) => {
+            e.preventDefault();
+            if (item.classList.contains('active')) return;
 
-            // If the clicked item is already active, do nothing
-            if (this.classList.contains('active')) return;
-
-            // Remove 'active' class from all navigation items
             navItems.forEach(nav => nav.classList.remove('active'));
-            this.classList.add('active'); // Add 'active' class to the clicked item
+            item.classList.add('active');
 
-            const page = this.getAttribute('data-page'); // Get the page name from the data-page attribute
-            if (page && page.trim() !== "") {
-                loadContent(page); // Load content for the selected page
+            const page = item.getAttribute('data-page');
+            if (page && page.trim() !== '') {
+                loadContent(page);
             } else {
                 console.error('Navigation item is missing a valid "data-page" attribute.');
             }
         });
     });
 
-    // Apply transition effects for smooth content and title changes
+    // Toggle user profile container on avatar click
+    userAvatar.addEventListener('click', (e) => {
+        e.stopPropagation(); // Prevent click from bubbling to document
+        userProfileContainer.style.display = userProfileContainer.style.display === 'block' ? 'none' : 'block';
+        userProfileContainer.style.opacity = userProfileContainer.style.display === 'block' ? '1' : '0';
+        userProfileContainer.style.transform = userProfileContainer.style.display === 'block' ? 'translateY(0)' : 'translateY(-10px)';
+    });
+
+    // Hide user profile container when clicking outside
+    document.addEventListener('click', (e) => {
+        if (!userAvatar.contains(e.target) && !userProfileContainer.contains(e.target)) {
+            userProfileContainer.style.display = 'none';
+            userProfileContainer.style.opacity = '0';
+            userProfileContainer.style.transform = 'translateY(-10px)';
+        }
+    });
+
+    window.openLogoutConfirmModal = () => {
+        const modal = document.getElementById('logoutConfirmModal');
+        modal.style.display = 'block';
+        setTimeout(() => modal.classList.add('show'), 10);
+    };
+
+    window.closeModal = (modalId) => {
+        const modal = document.getElementById(modalId);
+        modal.classList.remove('show');
+        setTimeout(() => modal.style.display = 'none', 300);
+    };
+
+    window.confirmLogout = () => {
+        console.log('User logged out');
+        // Replace with actual logout logic, e.g., window.location.href = '/logout';
+        closeModal('logoutConfirmModal');
+    };
+
     pageContent.style.transition = 'opacity 0.3s ease-in-out';
     pageTitle.style.transition = 'opacity 0.3s ease-in-out';
 
-    // Load the 'users' page by default when the dashboard loads
     loadContent('users');
 });
