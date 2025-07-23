@@ -5,7 +5,7 @@ function initUserManagement() {
             name: "John Doe",
             email: "john.doe@example.com",
             phone: "+1-234-567-8900",
-            role: "admin",
+            acc_nu: "0927387",
             status: "active",
             avatar: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&crop=face"
         },
@@ -14,7 +14,7 @@ function initUserManagement() {
             name: "Jane Smith",
             email: "jane.smith@example.com",
             phone: "+1-234-567-8901",
-            role: "user",
+            acc_nu: "9736712",
             status: "active",
             avatar: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=150&h=150&fit=crop&crop=face"
         },
@@ -23,7 +23,7 @@ function initUserManagement() {
             name: "Mike Johnson",
             email: "mike.johnson@example.com",
             phone: "+1-234-567-8902",
-            role: "moderator",
+            acc_nu: "0937612",
             status: "inactive",
             avatar: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&h=150&fit=crop&crop=face"
         },
@@ -32,7 +32,7 @@ function initUserManagement() {
             name: "Sarah Wilson",
             email: "sarah.wilson@example.com",
             phone: "+1-234-567-8903",
-            role: "user",
+            acc_nu: "08117987",
             status: "active",
             avatar: "https://images.unsplash.com/photo-1494790108755-2616b332e234?w=150&h=150&fit=crop&crop=face"
         }
@@ -50,10 +50,10 @@ function initUserManagement() {
             const userCard = document.createElement('div');
             userCard.className = 'user-card';
             userCard.innerHTML = `
-                <img src="${user.avatar}" alt="${user.name}" class="user-avatar">
+                <img src="${window.contextPath}/GetProImage?id=${user.id}" alt="${user.name}" class="user-avatar">
                 <div class="user-name">${user.name}</div>
                 <div class="user-email">${user.email}</div>
-                <div class="user-role">${user.role}</div>
+                <div class="user-role">${user.acc_nu}</div>
                 <div class="user-status status-${user.status}">${user.status}</div>
                 <div class="user-actions">
                     <button class="btn-small btn-view" onclick="viewUser(${user.id})">View</button>
@@ -64,6 +64,31 @@ function initUserManagement() {
             usersGrid.appendChild(userCard);
         });
     }
+	
+	function loadUsers() {
+	    try {
+	        $.post(`${window.contextPath}/CustomerServlet`, { action: 'getAllCustomers' }, (response) => {
+	            if (response.success && Array.isArray(response.data) && response.data.length > 0) {
+	                users = response.data.map(user => ({
+	                    id: user.u_id,
+	                    name: user.name,
+	                    email: user.email,
+	                    phone: user.phone,
+	                    acc_nu: user.acc_nu,
+	                    status: user.status,
+	                    avatar: user.avatar || 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&crop=face'
+	                }));
+	                renderUsers(users);
+	            } else {
+	                console.warn("No users found.");
+	            }
+	        }, 'json').fail(function (xhr, status, error) {
+	            console.error("Error fetching users:", status, error);
+	        });
+	    } catch (e) {
+	        console.error("Error loading users:", e);
+	    }
+	}
 
     function openModal(modalId) {
         const modal = document.getElementById(modalId);
@@ -89,7 +114,10 @@ function initUserManagement() {
 
     function editUser(id) {
         const user = users.find(u => u.id === id);
-        if (!user) return;
+        if (!user) {
+			console.error(`User with ID ${id} not found.`);
+			return
+		};
 
         document.getElementById('modalTitle').textContent = 'Edit User';
         document.getElementById('submitBtn').textContent = 'Update User';
@@ -123,8 +151,8 @@ function initUserManagement() {
                 <span class="user-detail-value">${user.phone}</span>
             </div>
             <div class="user-detail-info">
-                <span class="user-detail-label">Role:</span>
-                <span class="user-detail-value">${user.role}</span>
+                <span class="user-detail-label">Account No:</span>
+                <span class="user-detail-value">${user.acc_nu}</span>
             </div>
             <div class="user-detail-info">
                 <span class="user-detail-label">Status:</span>
@@ -163,35 +191,68 @@ function initUserManagement() {
         renderUsers(filteredUsers);
     }
 
-    // Handle form submission
-    const userForm = document.getElementById('userForm');
-    if (userForm) {
-        userForm.addEventListener('submit', function(e) {
-            e.preventDefault();
-            const userData = {
-                name: document.getElementById('userName').value,
-                email: document.getElementById('userEmail').value,
-                phone: document.getElementById('userPhone').value,
-                role: document.getElementById('userRole').value,
-                status: document.getElementById('userStatus').value,
-                avatar: document.getElementById('userAvatar').value || 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&crop=face'
-            };
+	// Handle form submission
+	const userForm = document.getElementById('userForm');
+	if (userForm) {
+	    userForm.addEventListener('submit', function (e) {
+	        e.preventDefault();
+			const name = document.getElementById('nameCus').value;
+			const email = document.getElementById('emailCus').value;
+			const phone = document.getElementById('userPhone').value;
+			const status = document.getElementById('userStatus').value;
+			const address = document.getElementById('userAddress').value;
+			const image = document.getElementById('userAvatar').files[0];
+			
+			if (!name || !email || !phone || !status || !address) {
+				alert("Please fill in all fields.");
+				return;
+			}
+			
+			const formData = new FormData();
+			formData.append('name', name);
+			formData.append('email', email);
+			formData.append('phone', phone);
+			formData.append('status', status);
+			formData.append('address', address);
+			if (image) {
+				if (image.type !== 'image/png') {
+					alert("Please select a PNG image.");
+					return;
+				}
+			formData.append('image', image);
+			}
+			if (currentEditId) {
+				formData.append('id', currentEditId);
+			}
+			formData.append('action', currentEditId ? 'updateCustomer' : 'addCustomer');
+			
+			$.ajax({
+				url: `${window.contextPath}/CustomerServlet`,
+				type: 'POST',
+				data: formData,
+				contentType: false,
+				enctype: 'multipart/form-data',
+				processData: false,
+				success: function (response) {
+					if (response.success) {
+                        alert(currentEditId ? "User updated successfully!" : "User added successfully!");
+                        closeModal('userModal');
+                        loadUsers();
+                    } else {
+                        alert("Error: " + response.message);
+                    }
+				},
+				error: function (xhr, status, error) {
+					alert("An error occurred while processing your request. Please try again.");
+					console.error("Error:", status, error);
+				}
+			});
+			closeModal('userModal');
+			currentEditId = null; // Reset after submission
+			
+	    });
+	}
 
-            if (currentEditId) {
-                const userIndex = users.findIndex(u => u.id === currentEditId);
-                users[userIndex] = { ...users[userIndex], ...userData };
-            } else {
-                const newUser = {
-                    id: Math.max(...users.map(u => u.id)) + 1,
-                    ...userData
-                };
-                users.push(newUser);
-            }
-
-            renderUsers();
-            closeModal('userModal');
-        });
-    }
 
     // Click outside modal to close
     window.onclick = function(event) {
@@ -204,11 +265,32 @@ function initUserManagement() {
     };
 
     // Initial render
-    renderUsers();
+	loadUsers();
+    //renderUsers();
+	
 	const searchInput = document.getElementById('searchInput');
 	        searchInput.addEventListener('input', function() {
 	           searchUsers;
-	        });
+	});
+
+
+			document.getElementById('userAvatar').addEventListener('change', function () {
+			    const file = this.files[0];
+			    if (file && file.type === 'image/png') {
+			        const reader = new FileReader();
+			        reader.onload = function (e) {
+			            const preview = document.getElementById('avatarPreview');
+			            preview.src = e.target.result;
+			            preview.style.display = 'block';
+			        };
+			        reader.readAsDataURL(file);
+			    } else {
+			        alert("Please select a PNG image.");
+			        this.value = ''; // reset file input
+			        document.getElementById('avatarPreview').style.display = 'none';
+			    }
+			});
+		
 
     // Make functions globally available
     window.viewUser = viewUser;

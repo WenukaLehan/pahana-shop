@@ -591,38 +591,51 @@
             <button class="close-btn" onclick="closeModal('userModal')">&times;</button>
         </div>
         <form id="userForm">
-            <div class="form-group">
+            <div class="form-group" style="display:none;">
                 <label class="form-label">Full Name</label>
-                <input type="text" class="form-input" id="userName" placeholder="Enter full name" required>
+                <input type="text" class="form-input" name="uName"  placeholder="Enter full name" >
+            </div>
+            <div class="form-group" style="display:none;">
+                <label class="form-label">Email</label>
+                <input type="email" class="form-input" name="uEmail"   placeholder="Enter email address" >
+            </div>
+            <div class="form-group">
+                <label class="form-label">Name</label>
+                <input type="text" class="form-input" name="name" id="nameCus" placeholder="Enter Name" required>
             </div>
             <div class="form-group">
                 <label class="form-label">Email</label>
-                <input type="email" class="form-input" id="userEmail" placeholder="Enter email address" required>
+                <input type="text" class="form-input" name="email" id="emailCus" placeholder="Enter Email" required>
             </div>
             <div class="form-group">
                 <label class="form-label">Phone</label>
-                <input type="tel" class="form-input" id="userPhone" placeholder="Enter phone number" required>
+                <input type="tel" class="form-input" name="phone" id="userPhone" placeholder="Enter phone number" required>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Address</label>
+                <input type="text" class="form-input" name="address" id="userAddress" placeholder="Enter Address" required>
             </div>
             <div class="form-group">
                 <label class="form-label">Role</label>
                 <select class="form-select" id="userRole" required>
                     <option value="">Select Role</option>
-                    <option value="admin">Admin</option>
-                    <option value="user">User</option>
-                    <option value="moderator">Moderator</option>
+                    <option value="3">Customer</option>
                 </select>
             </div>
             <div class="form-group">
                 <label class="form-label">Status</label>
-                <select class="form-select" id="userStatus" required>
+                <select class="form-select" id="userStatus" name="status" required>
                     <option value="">Select Status</option>
                     <option value="active">Active</option>
                     <option value="inactive">Inactive</option>
                 </select>
             </div>
             <div class="form-group">
-                <label class="form-label">Avatar URL</label>
-                <input type="url" class="form-input" id="userAvatar" placeholder="Enter avatar URL">
+                <label class="form-label">Select profile image</label>
+                <input type="file" class="form-input" name="image" id="userAvatar" accept="image/png" >
+            </div>
+            <div class="form-group">
+                <img id="avatarPreview" src="#" alt="Avatar Preview" style="display:none; max-height: 150px; margin-top: 10px;" />
             </div>
             <div class="modal-actions">
                 <button type="button" class="btn btn-cancel" onclick="closeModal('userModal')">Cancel</button>
@@ -656,6 +669,7 @@
         </div>
     </div>
 </div>
+ <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
 
 <script>
 

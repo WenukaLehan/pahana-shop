@@ -1,10 +1,10 @@
 package daos;
 
-import helper.DbCon;
-import helper.EmailSender;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
 import models.User;
+import util.DbCon;
+import util.EmailSender;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -25,7 +25,14 @@ public class UserDao {
             ResultSet rs = pst.executeQuery();
 
             if (rs.next()) {
-                return new User(rs.getInt("id"), rs.getString("username"), rs.getString("email"));
+                return new User( 
+						rs.getString("id"),
+						rs.getString("username"),
+						rs.getString("email"),
+						rs.getInt("role"),
+						rs.getString("name"),
+						rs.getString("phone")
+				);
             }
             return null;
         }

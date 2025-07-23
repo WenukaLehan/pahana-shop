@@ -12,6 +12,7 @@ import jakarta.servlet.http.HttpSession;
 import models.User;
 
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.Map;
@@ -42,6 +43,22 @@ public class UserServlet extends HttpServlet {
                 case "forgot_password":
                     changePassword(request, response);
                     break;
+                case "logout":
+                    HttpSession session = request.getSession(false);
+                    if (session != null) {
+                        session.invalidate();
+                    }
+
+                    response.setContentType("application/json");
+                    response.setCharacterEncoding("UTF-8");
+
+                    PrintWriter out = response.getWriter();
+                    out.print("{\"success\": true}");
+                    out.flush();
+					break;
+                case "getUserInfo":
+					getUserInfo(request, response);
+					break;
                 default:
                     response.sendRedirect("Login.jsp");
             }
@@ -51,21 +68,51 @@ public class UserServlet extends HttpServlet {
         }
     }
 
-    @Override
-    protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-        String action = request.getParameter("action");
-        if ("logout".equals(action)) {
-            HttpSession session = request.getSession(false);
-            if (session != null) {
-                session.invalidate();
-            }
-            response.sendRedirect("Login.jsp");
-        }
-    }
+//    @Override
+//    protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+//        String action = request.getParameter("action");
+//        if ("logout".equals(action)) {
+//            HttpSession session = request.getSession(false);
+//            if (session != null) {
+//                session.invalidate();
+//            }
+//            response.sendRedirect("Login.jsp");
+//        }
+//    }
     
 
 
-    private void loginUser(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+    private void getUserInfo(HttpServletRequest request, HttpServletResponse response) {
+        HttpSession session = request.getSession(false);
+        User user = (User) session.getAttribute("user");
+
+        response.setContentType("application/json");
+        response.setCharacterEncoding("UTF-8");
+
+        try (PrintWriter out = response.getWriter()) {
+            if (user != null) {
+                Map<String, Object> jsonResponse = new HashMap<>();
+                jsonResponse.put("success", true);
+                jsonResponse.put("data", user);
+
+                out.print(new Gson().toJson(jsonResponse));
+            } else {
+                Map<String, Object> errorResponse = new HashMap<>();
+                errorResponse.put("success", false);
+                errorResponse.put("message", "User not found or session expired.");
+
+                out.print(new Gson().toJson(errorResponse));
+                response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            }
+            out.flush();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+	
+
+	private void loginUser(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         String username = request.getParameter("username");
         String password = request.getParameter("password");
 
@@ -73,7 +120,7 @@ public class UserServlet extends HttpServlet {
             User user = userModel.loginUser(username, password);
             if (user != null) {
                 HttpSession session = request.getSession();
-                session.setAttribute("auth", user.getId());
+                session.setAttribute("user", user);
                 response.sendRedirect("./admin/a_dashboard.jsp");
             } else {
                 request.setAttribute("loginError", "Invalid username or password.");

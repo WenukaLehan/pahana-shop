@@ -108,10 +108,27 @@ document.addEventListener('DOMContentLoaded', () => {
     // Toggle user profile container on avatar click
     userAvatar.addEventListener('click', (e) => {
         e.stopPropagation(); // Prevent click from bubbling to document
+		getData();
         userProfileContainer.style.display = userProfileContainer.style.display === 'block' ? 'none' : 'block';
         userProfileContainer.style.opacity = userProfileContainer.style.display === 'block' ? '1' : '0';
         userProfileContainer.style.transform = userProfileContainer.style.display === 'block' ? 'translateY(0)' : 'translateY(-10px)';
     });
+	
+	getData = () => {
+		$.post(window.contextPath + '/user', { action: 'getUserInfo' }, (response) => {
+			if (response.success) {
+				const userInfo = response.data;
+				document.getElementById('userName').textContent = userInfo.name || 'User';
+				document.getElementById('userEmail').textContent = userInfo.email || '';
+			}
+			else {
+				console.error('Failed to fetch user info:', response.message);
+				}
+		}).fail(() => {
+					console.error('Failed to fetch user info due to network error.');
+              }
+		);
+	}
 
     // Hide user profile container when clicking outside
     document.addEventListener('click', (e) => {
@@ -135,9 +152,18 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     window.confirmLogout = () => {
-        console.log('User logged out');
-        // Replace with actual logout logic, e.g., window.location.href = '/logout';
-        closeModal('logoutConfirmModal');
+		$.post(window.contextPath + '/user', { action: 'logout' }, (response) => {
+		    if (response.success) {
+		        window.location.href = window.contextPath + '/Login.jsp';
+		    } else {
+		        alert('Logout failed. Please try again.');
+		        console.error('Logout error:', response.message);
+		    }
+		}).fail(() => {
+		    alert('Logout failed. Please try again.');
+		});
+
+		closeModal('logoutConfirmModal');
     };
 
     pageContent.style.transition = 'opacity 0.3s ease-in-out';

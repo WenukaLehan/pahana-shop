@@ -1,0 +1,181 @@
+package controllers;
+
+import jakarta.servlet.ServletException;
+import jakarta.servlet.annotation.MultipartConfig;
+import jakarta.servlet.annotation.WebServlet;
+import jakarta.servlet.http.HttpServlet;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.Part;
+import models.Customer;
+
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.sql.SQLException;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import com.google.gson.Gson;
+
+import daos.CustomerDao;
+
+@MultipartConfig(
+	    maxFileSize = 5 * 1024 * 1024, // 5MB
+	    maxRequestSize = 10 * 1024 * 1024 // 10MB
+	)
+@WebServlet("/CustomerServlet")
+public class CustomerServlet extends HttpServlet {
+	private static final long serialVersionUID = 1L;
+       
+    
+    public CustomerServlet() {
+        super();
+        // TODO Auto-generated constructor stub
+    }
+
+	
+	protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+		// TODO Auto-generated method stub
+		response.getWriter().append("Served at: ").append(request.getContextPath());
+	}
+
+	
+	protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+		String action = request.getParameter("action");
+		
+		switch (action) {
+			case "addCustomer":
+				addCustomer(request, response);
+				break;
+			case "updateCustomer":
+				updateCustomer(request, response);
+				break;
+			case "deleteCustomer":
+				deleteCustomer(request, response);
+				break;
+			case "getCustomer":
+				getCustomer(request, response);
+				break;
+			case "getAllCustomers":
+				try {
+					getAllCustomers(request, response);
+				} catch (ClassNotFoundException | SQLException | ServletException | IOException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+				break;
+			default:
+				response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Invalid action");
+		}
+	}
+
+
+	private void getAllCustomers(HttpServletRequest request, HttpServletResponse response) throws ClassNotFoundException, SQLException, ServletException, IOException {
+		
+		CustomerDao customerDao = new CustomerDao();
+		try {
+			response.setContentType("application/json");
+	        response.setCharacterEncoding("UTF-8");
+	        
+	        try (PrintWriter out = response.getWriter()){
+	        	List<Customer> customers = customerDao.getAllCustomers();
+	        	if(customers != null && !customers.isEmpty()) {
+	        		
+	        		 Map<String, Object> jsonResponse = new HashMap<>();
+	                 jsonResponse.put("success", true);
+	                 jsonResponse.put("data", customers);
+	                 
+	                 out.print(new Gson().toJson(jsonResponse));
+	        		
+	        	} else {
+	        		Map<String, Object> errorResponse = new HashMap<>();
+	                errorResponse.put("success", false);
+	                errorResponse.put("message", "User not found or session expired.");
+
+	                out.print(new Gson().toJson(errorResponse));
+	                response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+	        		
+	        	}
+	        	out.flush();
+	        	
+	        }
+	        
+		} catch (Exception e) {
+			e.printStackTrace();
+			response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Error retrieving customers");
+		}
+		
+	}
+
+
+	private void getCustomer(HttpServletRequest request, HttpServletResponse response) {
+		// TODO Auto-generated method stub
+		
+	}
+
+
+	private void deleteCustomer(HttpServletRequest request, HttpServletResponse response) {
+		// TODO Auto-generated method stub
+		
+	}
+
+
+	private void updateCustomer(HttpServletRequest request, HttpServletResponse response) {
+		// TODO Auto-generated method stub
+		
+	}
+
+
+	private void addCustomer(HttpServletRequest request, HttpServletResponse response) throws IOException {
+		// TODO Auto-generated method stub
+		try {
+			response.setContentType("application/json");
+	        response.setCharacterEncoding("UTF-8");
+	        
+	        CustomerDao customerDao = new CustomerDao();
+	        Customer customer = new Customer();
+	        
+	        // Assuming you have methods to get parameters from the request
+	        customer.setName(request.getParameter("name"));
+	        customer.setEmail(request.getParameter("email"));
+	        customer.setPhone(request.getParameter("phone"));
+	        customer.setAddress(request.getParameter("address"));
+	        customer.setStatus(request.getParameter("status"));
+	        Part imagePart = request.getPart("image");
+	        if (imagePart != null && imagePart.getSize() > 0) {
+	            customer.setImage(imagePart.getInputStream());
+	        }// Assuming image is uploaded as a part
+	        
+	        // Handle image upload if necessary
+	        
+	        boolean isAdded = customerDao.addCustomerWithUser(customer);
+	        
+	        try (PrintWriter out = response.getWriter()) {
+	        	if (isAdded) {
+	        		out.print("{\"success\": true, \"message\": \"Customer added successfully.\"}");
+	        	} else {
+	        		out.print("{\"success\": false, \"message\": \"Failed to add customer.\"}");
+	        	}
+	        	out.flush();
+	        }
+	        
+		} catch (Exception e) {
+			e.printStackTrace();
+			response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Error adding customer");
+		}
+	}
+
+}
+
+
+
+
+
+
+
+
+
+
+
+
