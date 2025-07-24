@@ -5,6 +5,7 @@ import com.google.gson.Gson;
 import daos.UserDao;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
+import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -121,6 +122,17 @@ public class UserServlet extends HttpServlet {
             if (user != null) {
                 HttpSession session = request.getSession();
                 session.setAttribute("user", user);
+                
+                Cookie userCookie = new Cookie("user", user.getId());
+                userCookie.setMaxAge(60 * 60 * 24); // 1 day
+                userCookie.setPath("/"); // Set path to root for global access
+                response.addCookie(userCookie);
+                // Set user role in session for access control
+                Cookie roleCookie = new Cookie("role", String.valueOf(user.getRole()));
+                roleCookie.setMaxAge(60 * 60 * 24); // 1 day
+                roleCookie.setPath("/"); // Set path to root for global access
+                response.addCookie(roleCookie);
+                
                 response.sendRedirect("./admin/a_dashboard.jsp");
             } else {
                 request.setAttribute("loginError", "Invalid username or password.");

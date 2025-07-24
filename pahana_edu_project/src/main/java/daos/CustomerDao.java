@@ -3,8 +3,13 @@ package daos;
 import java.io.InputStream;
 import java.sql.*;
 import java.util.*;
+
+import jakarta.servlet.http.HttpServletRequest;
 import models.Customer;
 import util.DbCon;
+import util.EmailSender;
+
+import java.security.SecureRandom;
 
 public class CustomerDao {
 
@@ -15,7 +20,7 @@ public class CustomerDao {
     }
 
  
-    public boolean addCustomerWithUser(Customer customer) {
+    public boolean addCustomerWithUser(Customer customer, HttpServletRequest request) {
         Connection conn = null;
         PreparedStatement userStmt = null;
         PreparedStatement getIdStmt = null;
@@ -25,16 +30,19 @@ public class CustomerDao {
         try {
             conn = DbCon.getConnection();
             conn.setAutoCommit(false); // Start transaction
-
+            
+            String password = getPassword(); // Generate a secure password
+            
             // 1. Insert into users
-            String insertUserSQL = "INSERT INTO users (username, name, phone, email, password, role) VALUES (?, ?, ?, ?, ?, ?)";
+            String insertUserSQL = "INSERT INTO users (username, name, phone, email, password, role, p_image) VALUES (?, ?, ?, ?, ?, ?, ?)";
             userStmt = conn.prepareStatement(insertUserSQL, Statement.RETURN_GENERATED_KEYS);
             userStmt.setString(1, customer.getEmail());
             userStmt.setString(2, customer.getName());
             userStmt.setString(3, customer.getPhone());
             userStmt.setString(4, customer.getEmail());
-            userStmt.setString(5, getPassword()); // Make sure this generates a valid password
+            userStmt.setString(5, password); // Make sure this generates a valid password
             userStmt.setInt(6, 3); // role = 3 for customer
+            userStmt.setBlob(7, customer.getImage()); // Assuming customer.getImage() returns InputStream or Blob
 
             int userRows = userStmt.executeUpdate();
             if (userRows == 0) throw new SQLException("User insert failed.");
@@ -75,7 +83,21 @@ public class CustomerDao {
             if (customerRows == 0) throw new SQLException("Customer insert failed.");
 
             conn.commit();
+            
+            EmailSender.sendEmail(
+            	    customer.getEmail(),
+            	    "Welcome to Pahana EDU",
+            	    "Dear " + customer.getName() + ",<br/>" +
+            	    "Your account has been created successfully.<br/>" +
+            	    "Username: " + customer.getEmail() + "<br/>" +
+            	    "Password: " + password + "<br/>" +
+            	    "Please log in and complete your profile.<br/><br/>" +
+            	    "Thank you for choosing Pahana EDU!",
+            	    request
+            	);
+            
             return true;
+
 
         } catch (Exception e) {
             e.printStackTrace();
@@ -97,40 +119,178 @@ public class CustomerDao {
 
 
 
+
+
     private String getPassword() {
-		// TODO Auto-generated method stub
-		return "123";
-	}
+        final int length = 12;
+        final String upper = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+        final String lower = "abcdefghijklmnopqrstuvwxyz";
+        final String digits = "0123456789";
+        final String special = "!@#$%^&*()-_=+[]{}|;:,.<>?";
+
+        final String allChars = upper + lower + digits + special;
+        SecureRandom random = new SecureRandom();
+        StringBuilder password = new StringBuilder();
+
+        // Ensure at least one character from each group is included
+        password.append(upper.charAt(random.nextInt(upper.length())));
+        password.append(lower.charAt(random.nextInt(lower.length())));
+        password.append(digits.charAt(random.nextInt(digits.length())));
+        password.append(special.charAt(random.nextInt(special.length())));
+
+        // Fill the rest with random characters
+        for (int i = 4; i < length; i++) {
+            password.append(allChars.charAt(random.nextInt(allChars.length())));
+        }
+
+        // Shuffle the characters to avoid predictable pattern
+        char[] pwdArray = password.toString().toCharArray();
+        for (int i = pwdArray.length - 1; i > 0; i--) {
+            int j = random.nextInt(i + 1);
+            char temp = pwdArray[i];
+            pwdArray[i] = pwdArray[j];
+            pwdArray[j] = temp;
+        }
+
+        return new String(pwdArray);
+    }
+
 
 	// Update customer
-    public boolean updateCustomer(Customer customer) {
-        String sql = "UPDATE customers SET full_name=?, address=?, email=?, status=?, p_image=?, phone_nu=? WHERE u_id=?";
-        try (PreparedStatement stmt = con.prepareStatement(sql)) {
-            stmt.setString(1, customer.getName());
-            stmt.setString(3, customer.getAddress());
-            stmt.setString(4, customer.getEmail());
-            stmt.setString(5, customer.getStatus());
-            stmt.setBlob(6, customer.getImage());
-            stmt.setString(7, customer.getPhone());
-            stmt.setString(8, customer.getU_id());
-            return stmt.executeUpdate() > 0;
+    public boolean updateCustomerWithUser(Customer customer, HttpServletRequest request) {
+        Connection conn = null;
+        PreparedStatement userStmt = null;
+        PreparedStatement customerStmt = null;
+
+        try {
+            conn = DbCon.getConnection();
+            conn.setAutoCommit(false); // Begin transaction
+
+         // 1. Update users table
+            String updateUserSQL;
+            if (customer.getImage() != null) {
+                updateUserSQL = "UPDATE users SET name = ?, phone = ?, email = ?, p_image = ? WHERE u_id = ?";
+                userStmt = conn.prepareStatement(updateUserSQL);
+                userStmt.setString(1, customer.getName());
+                userStmt.setString(2, customer.getPhone());
+                userStmt.setString(3, customer.getEmail());
+                userStmt.setBlob(4, customer.getImage());
+                userStmt.setString(5, customer.getU_id());
+            } else {
+                updateUserSQL = "UPDATE users SET name = ?, phone = ?, email = ? WHERE u_id = ?";
+                userStmt = conn.prepareStatement(updateUserSQL);
+                userStmt.setString(1, customer.getName());
+                userStmt.setString(2, customer.getPhone());
+                userStmt.setString(3, customer.getEmail());
+                userStmt.setString(4, customer.getU_id());
+            }
+
+
+            int userRows = userStmt.executeUpdate();
+            if (userRows == 0) throw new SQLException("User update failed.");
+
+            String updateCustomerSQL;
+            if (customer.getImage() != null) {
+                updateCustomerSQL = "UPDATE customers SET full_name = ?, address = ?, email = ?, status = ?, p_image = ?, phone_nu = ? WHERE u_id = ?";
+                customerStmt = conn.prepareStatement(updateCustomerSQL);
+                customerStmt.setString(1, customer.getName());
+                customerStmt.setString(2, customer.getAddress());
+                customerStmt.setString(3, customer.getEmail());
+                customerStmt.setString(4, customer.getStatus());
+                customerStmt.setBlob(5, customer.getImage());
+                customerStmt.setString(6, customer.getPhone());
+                customerStmt.setString(7, customer.getU_id());
+            } else {
+                updateCustomerSQL = "UPDATE customers SET full_name = ?, address = ?, email = ?, status = ?, phone_nu = ? WHERE u_id = ?";
+                customerStmt = conn.prepareStatement(updateCustomerSQL);
+                customerStmt.setString(1, customer.getName());
+                customerStmt.setString(2, customer.getAddress());
+                customerStmt.setString(3, customer.getEmail());
+                customerStmt.setString(4, customer.getStatus());
+                customerStmt.setString(5, customer.getPhone());
+                customerStmt.setString(6, customer.getU_id());
+            }
+
+            int customerRows = customerStmt.executeUpdate();
+            if (customerRows == 0) throw new SQLException("Customer update failed.");
+
+            conn.commit();
+
+            // Optional: Send update notification email
+            EmailSender.sendEmail(
+                customer.getEmail(),
+                "Your Pahana EDU Profile Has Been Updated",
+                "Dear " + customer.getName() + ",<br/>" +
+                "Your account information has been updated successfully.<br/>" +
+                "If you didn't request this change, please contact support immediately.<br/><br/>" +
+                "Thank you,<br/>Pahana EDU",
+                request
+            );
+
+            return true;
+
         } catch (Exception e) {
             e.printStackTrace();
+            try {
+                if (conn != null) conn.rollback();
+            } catch (SQLException rollbackEx) {
+                rollbackEx.printStackTrace();
+            }
             return false;
+
+        } finally {
+            try { if (userStmt != null) userStmt.close(); } catch (Exception ignored) {}
+            try { if (customerStmt != null) customerStmt.close(); } catch (Exception ignored) {}
+            try { if (conn != null) { conn.setAutoCommit(true); conn.close(); } } catch (Exception ignored) {}
         }
     }
 
+
     // Delete customer
-    public boolean deleteCustomer(String customerId) {
-        String sql = "DELETE FROM customers WHERE u_id=?";
-        try (PreparedStatement stmt = con.prepareStatement(sql)) {
-            stmt.setString(1, customerId);
-            return stmt.executeUpdate() > 0;
-        } catch (SQLException e) {
+    public boolean deleteCustomerWithUser(String u_id) {
+        Connection conn = null;
+        PreparedStatement deleteCustomerStmt = null;
+        PreparedStatement deleteUserStmt = null;
+
+        try {
+            conn = DbCon.getConnection();
+            conn.setAutoCommit(false); // Begin transaction
+
+            // 1. Delete from customers table
+            String deleteCustomerSQL = "DELETE FROM customers WHERE u_id = ?";
+            deleteCustomerStmt = conn.prepareStatement(deleteCustomerSQL);
+            deleteCustomerStmt.setString(1, u_id);
+            int customerRows = deleteCustomerStmt.executeUpdate();
+
+            if (customerRows == 0) throw new SQLException("Customer deletion failed or not found.");
+
+            // 2. Delete from users table
+            String deleteUserSQL = "DELETE FROM users WHERE u_id = ?";
+            deleteUserStmt = conn.prepareStatement(deleteUserSQL);
+            deleteUserStmt.setString(1, u_id);
+            int userRows = deleteUserStmt.executeUpdate();
+
+            if (userRows == 0) throw new SQLException("User deletion failed or not found.");
+
+            conn.commit();
+            return true;
+
+        } catch (Exception e) {
             e.printStackTrace();
+            try {
+                if (conn != null) conn.rollback();
+            } catch (SQLException rollbackEx) {
+                rollbackEx.printStackTrace();
+            }
             return false;
+
+        } finally {
+            try { if (deleteCustomerStmt != null) deleteCustomerStmt.close(); } catch (Exception ignored) {}
+            try { if (deleteUserStmt != null) deleteUserStmt.close(); } catch (Exception ignored) {}
+            try { if (conn != null) { conn.setAutoCommit(true); conn.close(); } } catch (Exception ignored) {}
         }
     }
+
 
     // Get one customer
     public Customer getCustomer(String customerId) {

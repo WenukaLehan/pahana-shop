@@ -17,6 +17,11 @@
         --hover-transform: translateY(-5px);
         --border-radius: 10px;
         --large-border-radius: 25px;
+        
+                    /* New notification colors */
+            --success-color: #4CAF50; /* Green */
+            --error-color: #F44336;   /* Red */
+            --info-color: #2196F3;    /* Blue */
     }
 
     .users-container {
@@ -552,7 +557,71 @@
             font-size: 13px;
         }
     }
+    
+        /* Loading Modal Styles */
+        .modal1 {
+            display: none; /* Initially hidden */
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 1000;
+            backdrop-filter: blur(10px);
+            justify-content: center;
+            align-items: center;
+        }
 
+        .modal1.show {
+            display: flex; /* Shown when 'show' class is added */
+        }
+
+        .modal-content1 {
+            background: var(--glass-background);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            padding: 30px;
+            border-radius: var(--large-border-radius);
+            max-width: 500px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+            box-sizing: border-box;
+        }
+
+        .loading-content {
+            text-align: center;
+            max-width: 300px;
+        }
+
+        .loading-spinner {
+            width: 60px;
+            height: 60px;
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-top: 4px solid white;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .loading-content h3 {
+            color: var(--text-primary);
+            margin: 0 0 10px 0;
+            font-size: 18px;
+        }
+
+        .loading-content p {
+            color: var(--text-secondary);
+            margin: 0;
+            font-size: 14px;
+        }
     /* Loading States */
     .loading {
         opacity: 0.5;
@@ -567,6 +636,113 @@
         outline: 2px solid var(--secondary-color);
         outline-offset: 2px;
     }
+    
+         /* Notification Popup Styles */
+        #notificationContainer {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1001;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            pointer-events: none; /* Allow clicks to pass through if no notifications */
+        }
+
+        .notification-popup {
+            background: var(--glass-background);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--border-radius);
+            padding: 15px 20px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            min-width: 280px;
+            max-width: 350px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            transform: translateX(100%);
+            opacity: 0;
+            animation: slideIn 0.5s forwards, fadeOut 0.5s 2.5s forwards; /* Slide in, then fade out after 2.5s delay */
+            pointer-events: all; /* Re-enable clicks for the notification itself */
+        }
+
+        .notification-popup.success {
+            border-left: 5px solid var(--success-color);
+        }
+
+        .notification-popup.error {
+            border-left: 5px solid var(--error-color);
+        }
+
+        .notification-popup.info {
+            border-left: 5px solid var(--info-color);
+        }
+
+        .notification-icon {
+            font-size: 24px;
+            color: var(--text-primary);
+        }
+
+        .notification-popup.success .notification-icon {
+            color: var(--success-color);
+        }
+
+        .notification-popup.error .notification-icon {
+            color: var(--error-color);
+        }
+
+        .notification-popup.info .notification-icon {
+            color: var(--info-color);
+        }
+
+        .notification-content {
+            flex-grow: 1;
+        }
+
+        .notification-title {
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 5px;
+            font-size: 16px;
+        }
+
+        .notification-message {
+            color: var(--text-secondary);
+            font-size: 14px;
+        }
+
+        .notification-close {
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            font-size: 18px;
+            cursor: pointer;
+            padding: 5px;
+            border-radius: 50%;
+            transition: background var(--transition-speed) ease;
+        }
+
+        .notification-close:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        @keyframes slideIn {
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        @keyframes fadeOut {
+            from {
+                opacity: 1;
+            }
+            to {
+                opacity: 0;
+                transform: translateX(100%);
+            }
+        }
 </style>
 
 <div class="users-container">
@@ -581,6 +757,15 @@
     <div class="users-grid" id="usersGrid">
         <!-- Users will be populated here -->
     </div>
+    
+ <!-- Loading Modal -->
+        <div class="modal1" id="loadingModal">
+            <div class="modal-content1 loading-content">
+                <div class="loading-spinner"></div>
+                <h3 id="loadingTitle">Processing...</h3>
+                <p id="loadingMessage">Please wait while we complete the operation.</p>
+            </div>
+        </div>
 </div>
 
 <!-- Add/Edit User Modal -->
@@ -618,15 +803,15 @@
             <div class="form-group">
                 <label class="form-label">Role</label>
                 <select class="form-select" id="userRole" required>
-                    <option value="">Select Role</option>
-                    <option value="3">Customer</option>
+                    <option value="" disabled>Select Role</option>
+                    <option value="3" selected>Customer</option>
                 </select>
             </div>
             <div class="form-group">
                 <label class="form-label">Status</label>
                 <select class="form-select" id="userStatus" name="status" required>
-                    <option value="">Select Status</option>
-                    <option value="active">Active</option>
+                    <option value="" disabled>Select Status</option>
+                    <option value="active" selected>Active</option>
                     <option value="inactive">Inactive</option>
                 </select>
             </div>
@@ -635,7 +820,7 @@
                 <input type="file" class="form-input" name="image" id="userAvatar" accept="image/png" >
             </div>
             <div class="form-group">
-                <img id="avatarPreview" src="#" alt="Avatar Preview" style="display:none; max-height: 150px; margin-top: 10px;" />
+                <img id="avatarPreview" src="" alt="Avatar Preview" style="display:none; max-height: 150px; margin-top: 10px;" />
             </div>
             <div class="modal-actions">
                 <button type="button" class="btn btn-cancel" onclick="closeModal('userModal')">Cancel</button>
@@ -644,6 +829,9 @@
         </form>
     </div>
 </div>
+
+
+
 
 <!-- View User Modal -->
 <div class="modal" id="viewModal">
@@ -669,6 +857,12 @@
         </div>
     </div>
 </div>
+
+    <!-- Notification Container -->
+    <div id="notificationContainer">
+        <!-- Notifications will be appended here -->
+    </div>
+    
  <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
 
 <script>

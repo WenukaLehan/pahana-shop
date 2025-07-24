@@ -8,6 +8,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
 import daos.CustomerDao;
+import daos.UserDao;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -25,38 +26,73 @@ public class GetProImage extends HttpServlet {
             throws ServletException, IOException {
         
         String userId = request.getParameter("id");
-
-        if (userId == null || userId.trim().isEmpty()) {
-            response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Invalid customer ID");
-            return;
-        }
-
-        try {
-            CustomerDao customerDao = new CustomerDao();
-
-            // Fetch image stream from database
-            InputStream imageStream = customerDao.getCustomerImage(userId);
-
-            if (imageStream != null) {
-                response.setContentType("image/png"); // or image/jpeg, depending on your stored type
-
-                try (ServletOutputStream out = response.getOutputStream()) {
-                    byte[] buffer = new byte[4096];
-                    int bytesRead;
-                    while ((bytesRead = imageStream.read(buffer)) != -1) {
-                        out.write(buffer, 0, bytesRead);
-                    }
-                    out.flush();
-                }
-
-                imageStream.close();
-            } else {
-                response.sendError(HttpServletResponse.SC_NOT_FOUND, "Image not found for ID: " + userId);
-            }
-
-        } catch (Exception e) {
-            e.printStackTrace();
-            response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Error retrieving image");
-        }
+        String action = request.getParameter("action");
+        if(action == null) {
+	        if (userId == null || userId.trim().isEmpty()) {
+	            response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Invalid customer ID");
+	            return;
+	        }
+	
+	        try {
+	            CustomerDao customerDao = new CustomerDao();
+	
+	            // Fetch image stream from database
+	            InputStream imageStream = customerDao.getCustomerImage(userId);
+	
+	            if (imageStream != null) {
+	                response.setContentType("image/png"); // or image/jpeg, depending on your stored type
+	
+	                try (ServletOutputStream out = response.getOutputStream()) {
+	                    byte[] buffer = new byte[4096];
+	                    int bytesRead;
+	                    while ((bytesRead = imageStream.read(buffer)) != -1) {
+	                        out.write(buffer, 0, bytesRead);
+	                    }
+	                    out.flush();
+	                }
+	
+	                imageStream.close();
+	            } else {
+	                response.sendError(HttpServletResponse.SC_NOT_FOUND, "Image not found for ID: " + userId);
+	            }
+	
+	        } catch (Exception e) {
+	            e.printStackTrace();
+	            response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Error retrieving image");
+	        }
+        }else if (action.equals("user")) {
+			if (userId == null || userId.trim().isEmpty()) {
+	            response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Invalid customer ID");
+	            return;
+	        }
+	
+	        try {
+	            UserDao userDao = new UserDao();
+	            // Fetch image stream from database
+	            InputStream imageStream = userDao.getUserImage(userId);
+	            if (imageStream != null) {
+	                response.setContentType("image/png"); // or image/jpeg, depending on your stored type
+	
+	                try (ServletOutputStream out = response.getOutputStream()) {
+	                    byte[] buffer = new byte[4096];
+	                    int bytesRead;
+	                    while ((bytesRead = imageStream.read(buffer)) != -1) {
+	                        out.write(buffer, 0, bytesRead);
+	                    }
+	                    out.flush();
+	                }
+	
+	                imageStream.close();
+	            } else {
+	                response.sendError(HttpServletResponse.SC_NOT_FOUND, "Image not found for ID: " + userId);
+	            }
+	
+	           
+	
+	        } catch (Exception e) {
+	            e.printStackTrace();
+	            response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Error deleting image");
+	        }
+		}
     }
 }

@@ -6,6 +6,7 @@ import models.User;
 import util.DbCon;
 import util.EmailSender;
 
+import java.io.InputStream;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -80,4 +81,22 @@ public class UserDao {
             return rowCount > 0;
         }
     }
+
+	public InputStream getUserImage(String userId) {
+				try (Connection con = DbCon.getConnection()) {
+			String query = "SELECT p_image FROM users WHERE id = ?";
+			PreparedStatement pst = con.prepareStatement(query);
+			pst.setString(1, userId);
+			ResultSet rs = pst.executeQuery();
+
+			if (rs.next()) {
+				return rs.getBinaryStream("p_image");
+			}
+		} catch (SQLException | ClassNotFoundException e) {
+			e.printStackTrace();
+			return null;
+		}
+		return null;
+	}
+    
 }

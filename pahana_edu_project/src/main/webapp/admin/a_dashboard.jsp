@@ -1,5 +1,18 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
-<!DOCTYPE html>
+
+    <%
+	    String userId = "0";
+	    jakarta.servlet.http.Cookie[] cookies = request.getCookies();
+	    if (cookies != null) {
+	        for (jakarta.servlet.http.Cookie cookie : cookies) {
+	            if ("user".equals(cookie.getName())) {
+	            	userId = cookie.getValue();
+	                break;
+	            }
+	        }
+	    }
+	%>
+
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -58,21 +71,19 @@
             <div class="indicator"></div>
         </ul>
     </div>
+    
+
 
     <div class="main-content">
         <div class="header">
             <div></div>
             <div class="panel-title" id="pageTitle">User Management</div>
             <div class="user1-avatar">
-                <svg viewBox="0 0 24 24">
-                    <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
-                </svg>
+                <img src="<%= request.getContextPath() %>/GetProImage?id=<%= userId %>&action=user" alt="User" class="user-image" onerror="this.src='https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQ4YreOWfDX3kK-QLAbAL4ufCPc84ol2MA8Xg&s'" />
                 <div class="user-profile-container" id="userProfileContainer">
                     <div class="user-profile-content">
                         <div class="user-profile-icon">
-                            <svg viewBox="0 0 24 24">
-                                <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
-                            </svg>
+                            <img src="<%= request.getContextPath() %>/GetProImage?id=<%= userId %>&action=user" alt="User" class="user-image" onerror="this.src='https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQ4YreOWfDX3kK-QLAbAL4ufCPc84ol2MA8Xg&s'" />
                         </div>
                         <div class="user-profile-name" id="userName">John Doe</div>
                         <div class="user-profile-email" id="userEmail">john.doe@example.com</div>

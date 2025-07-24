@@ -115,15 +115,71 @@ public class CustomerServlet extends HttpServlet {
 	}
 
 
-	private void deleteCustomer(HttpServletRequest request, HttpServletResponse response) {
+	private void deleteCustomer(HttpServletRequest request, HttpServletResponse response) throws IOException {
+		
 		// TODO Auto-generated method stub
+		try {
+			response.setContentType("application/json");
+	        response.setCharacterEncoding("UTF-8");
+	        
+	        CustomerDao customerDao = new CustomerDao();
+	        String customerId = request.getParameter("id");
+	        
+	        boolean isDeleted = customerDao.deleteCustomerWithUser(customerId);
+	        
+	        try (PrintWriter out = response.getWriter()) {
+	        	if (isDeleted) {
+	        		out.print("{\"success\": true, \"message\": \"Customer deleted successfully.\"}");
+	        	} else {
+	        		out.print("{\"success\": false, \"message\": \"Failed to delete customer.\"}");
+	        	}
+	        	out.flush();
+	        }
+	        
+		} catch (Exception e) {
+			e.printStackTrace();
+			response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Error deleting customer");
+		}
 		
 	}
 
 
-	private void updateCustomer(HttpServletRequest request, HttpServletResponse response) {
+	private void updateCustomer(HttpServletRequest request, HttpServletResponse response) throws IOException {
 		// TODO Auto-generated method stub
-		
+		try {
+			response.setContentType("application/json");
+	        response.setCharacterEncoding("UTF-8");
+	        
+	        CustomerDao customerDao = new CustomerDao();
+	        Customer customer = new Customer();
+	        
+	        // Assuming you have methods to get parameters from the request
+	        customer.setU_id(request.getParameter("id"));
+	        customer.setName(request.getParameter("name"));
+	        customer.setEmail(request.getParameter("email"));
+	        customer.setPhone(request.getParameter("phone"));
+	        customer.setAddress(request.getParameter("address"));
+	        customer.setStatus(request.getParameter("status"));
+	        Part imagePart = request.getPart("image");
+	        if (imagePart != null && imagePart.getSize() > 0) {
+	            customer.setImage(imagePart.getInputStream());
+	        }
+	        
+	        boolean isUpdated = customerDao.updateCustomerWithUser(customer, request);
+	        
+	        try (PrintWriter out = response.getWriter()) {
+	        	if (isUpdated) {
+	        		out.print("{\"success\": true, \"message\": \"Customer updated successfully.\"}");
+	        	} else {
+	        		out.print("{\"success\": false, \"message\": \"Failed to update customer.\"}");
+	        	}
+	        	out.flush();
+	        }
+	        
+		} catch (Exception e) {
+			e.printStackTrace();
+			response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Error updating customer");
+		}
 	}
 
 
@@ -149,7 +205,7 @@ public class CustomerServlet extends HttpServlet {
 	        
 	        // Handle image upload if necessary
 	        
-	        boolean isAdded = customerDao.addCustomerWithUser(customer);
+	        boolean isAdded = customerDao.addCustomerWithUser(customer, request);
 	        
 	        try (PrintWriter out = response.getWriter()) {
 	        	if (isAdded) {
