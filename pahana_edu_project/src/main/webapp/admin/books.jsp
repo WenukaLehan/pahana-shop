@@ -709,6 +709,183 @@
         outline: 2px solid var(--secondary-color);
         outline-offset: 2px;
     }
+    
+    /* Notification Popup Styles */
+        #notificationContainer {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1001;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            pointer-events: none; /* Allow clicks to pass through if no notifications */
+        }
+
+        .notification-popup {
+            background: var(--glass-background);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--border-radius);
+            padding: 15px 20px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            min-width: 280px;
+            max-width: 350px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            transform: translateX(100%);
+            opacity: 0;
+            animation: slideIn 0.5s forwards, fadeOut 0.5s 2.5s forwards; /* Slide in, then fade out after 2.5s delay */
+            pointer-events: all; /* Re-enable clicks for the notification itself */
+        }
+
+        .notification-popup.success {
+            border-left: 5px solid var(--success-color);
+        }
+
+        .notification-popup.error {
+            border-left: 5px solid var(--error-color);
+        }
+
+        .notification-popup.info {
+            border-left: 5px solid var(--info-color);
+        }
+
+        .notification-icon {
+            font-size: 24px;
+            color: var(--text-primary);
+        }
+
+        .notification-popup.success .notification-icon {
+            color: var(--success-color);
+        }
+
+        .notification-popup.error .notification-icon {
+            color: var(--error-color);
+        }
+
+        .notification-popup.info .notification-icon {
+            color: var(--info-color);
+        }
+
+        .notification-content {
+            flex-grow: 1;
+        }
+
+        .notification-title {
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 5px;
+            font-size: 16px;
+        }
+
+        .notification-message {
+            color: var(--text-secondary);
+            font-size: 14px;
+        }
+
+        .notification-close {
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            font-size: 18px;
+            cursor: pointer;
+            padding: 5px;
+            border-radius: 50%;
+            transition: background var(--transition-speed) ease;
+        }
+
+        .notification-close:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        @keyframes slideIn {
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        @keyframes fadeOut {
+            from {
+                opacity: 1;
+            }
+            to {
+                opacity: 0;
+                transform: translateX(100%);
+            }
+        }
+        
+         /* Loading Modal Styles */
+        .modal1 {
+            display: none; /* Initially hidden */
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 1000;
+            backdrop-filter: blur(10px);
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal1.show {
+            display: flex; /* Shown when 'show' class is added */
+        }
+
+        .modal-content1 {
+            background: var(--glass-background);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            padding: 30px;
+            border-radius: var(--large-border-radius);
+            max-width: 500px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+            box-sizing: border-box;
+        }
+
+        .loading-content {
+            text-align: center;
+            max-width: 300px;
+        }
+
+        .loading-spinner {
+            width: 60px;
+            height: 60px;
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-top: 4px solid white;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .loading-content h3 {
+            color: var(--text-primary);
+            margin: 0 0 10px 0;
+            font-size: 18px;
+        }
+
+        .loading-content p {
+            color: var(--text-secondary);
+            margin: 0;
+            font-size: 14px;
+        }
+    /* Loading States */
+    .loading {
+        opacity: 0.5;
+        pointer-events: none;
+    }
 </style>
 
 <div class="books-container">
@@ -726,6 +903,16 @@
     <div class="books-grid" id="booksGrid">
         <!-- Books will be populated here -->
     </div>
+    
+     <!-- Loading Modal -->
+        <div class="modal1" id="loadingModal">
+            <div class="modal-content1 loading-content">
+                <div class="loading-spinner"></div>
+                <h3 id="loadingTitle">Processing...</h3>
+                <p id="loadingMessage">Please wait while we complete the operation.</p>
+            </div>
+        </div>
+    
 </div>
 
 <!-- Add/Edit Book Modal -->
@@ -735,34 +922,61 @@
             <h3 class="modal-title" id="modalTitle">Add New Book</h3>
             <button class="close-btn" onclick="closeModal('bookModal')">×</button>
         </div>
-        <form id="bookForm">
-            <div class="form-group">
-                <label class="form-label">Title</label>
-                <input type="text" class="form-input" id="bookTitle" placeholder="Enter book title" required>
+        <form id="bookForm" enctype="multipart/form-data">
+	    <div class="form-group">
+	        <label class="form-label">Title</label>
+	        <input type="text" class="form-input" id="bookTitle" placeholder="Enter book title" required>
+	    </div>
+	    <div class="form-group">
+	        <label class="form-label">Author</label>
+	        <input type="text" class="form-input" id="bookAuthor" placeholder="Enter author name" required>
+	    </div>
+	    <div class="form-group">
+	        <label class="form-label" for="categoryId">Category</label>
+	        <select class="form-input" id="categoryId" required>
+	            <option value="" disabled selected>Select category</option>
+	            <option value="0" style="color:black">Fiction</option>
+	            <option value="1" style="color:black">Non-fiction</option>
+	            <option value="2" style="color:black">Science</option>
+	            <option value="3" style="color:black">Biography</option>
+	            <option value="4" style="color:black">History</option>
+	            <option value="5" style="color:black">Technology</option>
+	            <option value="6" style="color:black">Fantasy</option>
+	            <option value="7" style="color:black">Self-help</option>
+	            <option value="8" style="color:black">Other</option>
+	        </select>
+	    </div>
+	    <div class="form-group">
+	        <label class="form-label">Price</label>
+	        <input type="number" class="form-input" id="bookPrice" placeholder="Enter price" step="0.01" required>
+	    </div>
+	    <div class="form-group">
+	        <label class="form-label">Stock</label>
+	        <input type="number" class="form-input" id="bookStock" placeholder="Enter stock quantity" required>
+	    </div>
+	    <div class="form-group">
+	        <label class="form-label">Cover Image</label>
+	        <input type="file" class="form-input" id="bookImage" accept="image/*">
+	    </div>
+	    <div class="form-group">
+                <img id="bookPreview" src="" alt="Book Preview" style="display:none; max-height: 150px; margin-top: 10px;" />
             </div>
-            <div class="form-group">
-                <label class="form-label">Author</label>
-                <input type="text" class="form-input" id="bookAuthor" placeholder="Enter author name" required>
-            </div>
-            <div class="form-group">
-                <label class="form-label">Price</label>
-                <input type="number" class="form-input" id="bookPrice" placeholder="Enter price" step="0.01" required>
-            </div>
-            <div class="form-group">
-                <label class="form-label">Image URL</label>
-                <input type="url" class="form-input" id="bookImage" placeholder="Enter image URL">
-            </div>
-            <div class="form-group">
-                <label class="form-label">Description</label>
-                <textarea class="form-input form-textarea" id="bookDescription" placeholder="Enter book description"></textarea>
-            </div>
-            <div class="modal-actions">
-                <button type="button" class="btn btn-cancel" onclick="closeModal('bookModal')">Cancel</button>
-                <button type="submit" class="btn btn-primary" id="submitBtn">Add Book</button>
-            </div>
-        </form>
+	    <div class="form-group">
+	        <label class="form-label">Description</label>
+	        <textarea class="form-input form-textarea" id="bookDescription" placeholder="Enter book description"></textarea>
+	    </div>
+	    <div class="modal-actions">
+	        <button type="button" class="btn btn-cancel" onclick="closeModal('bookModal')">Cancel</button>
+	        <button type="submit" class="btn btn-primary" id="submitBtn">Add Book</button>
+	    </div>
+	</form>
     </div>
 </div>
+
+    <!-- Notification Container -->
+    <div id="notificationContainer">
+        <!-- Notifications will be appended here -->
+    </div>
 
 <!-- View Book Modal -->
 <div class="modal" id="viewModal">
