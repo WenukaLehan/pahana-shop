@@ -1,25 +1,19 @@
 (() => {
     const entriesPerPage = 5;
-	const apiBaseUrl = `${window.contextPath}/BookServlet`;
+    const apiBaseUrl = `${window.contextPath}/BookServlet`;
 
-    let books = [
-        
-    ];
-
-    let categories = [
-        { id: 1, name: "Fiction", description: "Fictional literature and novels", status: "active" },
-    ];
-
+    let books = [];
+    let categories = [];
     let currentEditId = null;
     let deleteBookId = null;
     let currentCategoryPage = 1;
-	
-	/**
-	 * Shows a notification popup.
-	 * @param {'success'|'error'|'info'} type - Type of notification (e.g., 'success', 'error', 'info').
-	 * @param {string} message - The message to display in the notification.
-	 * @param {number} duration - How long the notification should be visible in milliseconds (default: 3000).
-	 */
+
+    /**
+     * Shows a notification popup.
+     * @param {'success'|'error'|'info'} type - Type of notification (e.g., 'success', 'error', 'info').
+     * @param {string} message - The message to display in the notification.
+     * @param {number} duration - How long the notification should be visible in milliseconds (default: 3000).
+     */
 	function showNotification(type, message, duration = 3000) {
 	    const container = document.getElementById('notificationContainer');
 	    const notification = document.createElement('div');
@@ -57,104 +51,143 @@
 	        }, 500); // Remove from DOM after fade out completes
 	    }, duration);
 	}
-	
-	/**
-	 * Shows the loading modal with a customizable title and message.
-	 * @param {string} title - The title for the loading modal.
-	 * @param {string} message - The message for the loading modal.
-	 */
-	function showLoadingModal(title = 'Processing...', message = 'Please wait while we complete the operation.') {
-	    const loadingModal = document.getElementById('loadingModal');
-	    const loadingTitle = document.getElementById('loadingTitle');
-	    const loadingMessage = document.getElementById('loadingMessage');
 
-	    loadingTitle.textContent = title;
-	    loadingMessage.textContent = message;
-	    loadingModal.classList.add('show');
-	}
+    /**
+     * Shows the loading modal with a minimum display time.
+     * @param {string} title - The title for the loading modal.
+     * @param {string} message - The message for the loading modal.
+     * @returns {Promise} Resolves after a minimum delay of 500ms.
+     */
+    function showLoadingModal(title = 'Processing...', message = 'Please wait while we complete the operation.') {
+        const loadingModal = document.getElementById('loadingModal');
+        const loadingTitle = document.getElementById('loadingTitle');
+        const loadingMessage = document.getElementById('loadingMessage');
 
-	/**
-	 * Hides the loading modal.
-	 */
-	function hideLoadingModal() {
-	    const loadingModal = document.getElementById('loadingModal');
-	    loadingModal.classList.remove('show');
-	}
-	
-	function fetchBooks() {
-		showLoadingModal("Loading Books", "Please wait while we fetch the book data.");
-	    fetch(apiBaseUrl, {
-	        method: 'POST',
-	        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-	        body: new URLSearchParams({ action: 'listBooks' })
-	    })
-	    .then(response => response.json())
-	    .then(data => {
-	        if (data.success && Array.isArray(data.books)) {
-	            books = data.books;
-	            renderBooks();
-				hideLoadingModal();
-	        } else {
-				hideLoadingModal();
-				showNotification('error', "No books found or invalid response format.");
-	            console.error("No books found or invalid response format.");
-	        }
-	    })
-	    .catch(error => {
-			hideLoadingModal();
-	        console.error("Error fetching books:", error);
-			showNotification('error', "An error occurred while fetching books. Please try again.");
-	    });
-	}
+        loadingTitle.textContent = title;
+        loadingMessage.textContent = message;
+        loadingModal.classList.add('show');
 
+        return new Promise(resolve => setTimeout(resolve, 500)); // Minimum 500ms delay
+    }
+
+    /**
+     * Hides the loading modal.
+     */
+    function hideLoadingModal() {
+        const loadingModal = document.getElementById('loadingModal');
+        loadingModal.classList.remove('show');
+    }
+
+    /**
+     * Fetches books from the server and updates the UI.
+     */
+    function fetchBooks() {
+        showLoadingModal("Loading Books", "Please wait while we fetch the book data.").then(() => {
+            $.ajax({
+                url: apiBaseUrl,
+                type: 'POST',
+                data: { action: 'listBooks' },
+                success: function (response) {
+                    hideLoadingModal();
+                    if (response.success && Array.isArray(response.books)) {
+                        books = response.books;
+                        if (books.length === 0) {
+                            showNotification('info', "No books available.");
+                        } else {
+                            renderBooks();
+                        }
+                    } else {
+                        showNotification('error', "No books found or invalid response format: " + (response.message || 'Unknown error'));
+                        console.error("No books found or invalid response format:", response.message || 'Unknown error');
+                    }
+                },
+                error: function (xhr, status, error) {
+                    hideLoadingModal();
+                    showNotification('error', "Error fetching books: " + error);
+                    console.error("Error fetching books:", status, error);
+                }
+            });
+        });
+    }
+
+    /**
+     * Fetches categories from the server and updates the UI.
+     */
+    function fetchCategories() {
+        showLoadingModal("Loading Categories", "Please wait while we fetch the category data.").then(() => {
+            $.ajax({
+                url: `${window.contextPath}/CategoryServlet`,
+                type: 'POST',
+                data: { action: 'list' },
+                success: function (response) {
+                    hideLoadingModal();
+                    if (response.success && Array.isArray(response.categories)) {
+                        categories = response.categories;
+                        if (categories.length === 0) {
+                            showNotification('info', "No categories available.");
+                        } else {
+                            updateCategoryTable();
+                            updateCategoryDropdown();
+                        }
+                    } else {
+                        showNotification('error', "No categories found or invalid response format: " + (response.message || 'Unknown error'));
+                        console.error("No categories found or invalid response format:", response.message || 'Unknown error');
+                    }
+                },
+                error: function (xhr, status, error) {
+                    hideLoadingModal();
+                    showNotification('error', "Error fetching categories: " + error);
+                    console.error("Error fetching categories:", status, error);
+                }
+            });
+        });
+    }
+
+    /**
+     * Initializes book and category management.
+     */
     function initBookManagement() {
-		fetchBooks();
-		//fetchCategories();
-        //renderBooks();
+        fetchBooks();
+        fetchCategories();
         document.getElementById('bookForm').addEventListener('submit', handleFormSubmit);
         document.getElementById('categoryForm').addEventListener('submit', handleCategoryFormSubmit);
         window.addEventListener('click', handleOutsideClick);
-        updateCategoryTable();
     }
 
-	function fetchCategories() {
-		try{
-            $.post(apiBaseUrl, {action : 'getAllCategories'}, function(data) {
-                if(data.success && data.categories && Array.isArray(data.categories)) {
-                    categories = data.categories;
-                    updateCategoryTable();
-					updateCategoryDropdown();
-                } else {
-                    console.error("No categories found or invalid response format.");
-                }
-            }, 'json')
-            .fail(function(jqXHR, textStatus, errorThrown) {
-                console.error("Error fetching categories:", textStatus, errorThrown);
-            });
-            
-        }catch(e){
-            console.error("Error fetching categories:", e);
-        }
-	}
-	
-	function updateCategoryDropdown() {
-		const categorySelect = document.getElementById('bookCategory');
+    /**
+     * Updates the category dropdown with fetched categories.
+     */
+    function updateCategoryDropdown() {
+        const categorySelect = document.getElementById('categoryId');
         categorySelect.innerHTML = '<option value="" disabled selected>Select Category</option>';
         categories.forEach(category => {
             const option = document.createElement('option');
             option.value = category.id;
             option.textContent = category.name;
-			if (category.status === 'inactive') {
-                option.disabled = true; // Disable inactive categories
+            if (category.status === 'inactive') {
+                option.disabled = true;
             }
-			option.style.color = category.status === 'inactive' ? 'gray' : 'black';
+            option.style.color = category.status === 'inactive' ? 'gray' : 'black';
             categorySelect.appendChild(option);
         });
     }
 
+    /**
+     * Renders the book grid.
+     * @param {Array} booksToRender - Books to display (default: global books array).
+     */
     function renderBooks(booksToRender = books) {
         const booksGrid = document.getElementById('booksGrid');
         booksGrid.innerHTML = '';
+
+        if (booksToRender.length === 0) {
+            booksGrid.innerHTML = `
+                <div class="empty-row" style="text-align: center; color: var(--text-muted); padding: 40px;">
+                    No books available. Add a new book above.
+                </div>
+            `;
+            return;
+        }
 
         booksToRender.forEach(book => {
             const bookCard = document.createElement('div');
@@ -174,23 +207,40 @@
         });
     }
 
+    /**
+     * Opens the modal to add a new book.
+     */
     function openAddBookModal() {
         document.getElementById('modalTitle').textContent = 'Add New Book';
         document.getElementById('submitBtn').textContent = 'Add Book';
         document.getElementById('bookForm').reset();
+        document.getElementById('bookPreview').style.display = 'none';
+        document.getElementById('bookPreview').src = '';
         currentEditId = null;
         openModal('bookModal');
+        //showNotification('info', "Opened form to add a new book.");
     }
 
+    /**
+     * Opens the category modal.
+     */
     function openCategoryModal() {
         document.getElementById('categoryForm').reset();
         openModal('categoryModal');
         updateCategoryTable();
+        //showNotification('info', "Opened form to add a new category.");
     }
 
+    /**
+     * Opens the modal to edit a book.
+     * @param {number} id - The book ID.
+     */
     function editBook(id) {
         const book = books.find(b => b.id === id);
-        if (!book) return;
+        if (!book) {
+            showNotification('error', "Book not found.");
+            return;
+        }
 
         document.getElementById('modalTitle').textContent = 'Edit Book';
         document.getElementById('submitBtn').textContent = 'Update Book';
@@ -198,21 +248,32 @@
         document.getElementById('bookAuthor').value = book.author;
         document.getElementById('bookPrice').value = book.price;
         document.getElementById('bookDescription').value = book.description;
-		document.getElementById('bookStock').value = book.stock || '';
-		document.getElementById('categoryId').value = book.categoryId || '';
-		const bookImage = document.getElementById('bookPreview');
-		if (book.id) {
+        document.getElementById('bookStock').value = book.stock || '';
+        document.getElementById('categoryId').value = book.categoryId || '';
+        const bookImage = document.getElementById('bookPreview');
+        if (book.id) {
             bookImage.src = `${window.contextPath}/GetProImage?bookId=${book.id}&action=book`;
-            bookImage.style.display = 'block'; // Show preview if image exists
-		}
+            bookImage.style.display = 'block';
+        } else {
+            bookImage.style.display = 'none';
+            bookImage.src = '';
+        }
 
         currentEditId = id;
         openModal('bookModal');
+        //showNotification('info', `Editing book: ${book.title}`);
     }
 
+    /**
+     * Displays book details in a modal.
+     * @param {number} id - The book ID.
+     */
     function viewBook(id) {
         const book = books.find(b => b.id === id);
-        if (!book) return;
+        if (!book) {
+            showNotification('error', "Book not found.");
+            return;
+        }
 
         const bookDetails = document.getElementById('bookDetails');
         bookDetails.innerHTML = `
@@ -226,52 +287,72 @@
             </div>
         `;
         openModal('viewModal');
+        //showNotification('info', `Viewing book: ${book.title}`);
     }
 
+    /**
+     * Initiates book deletion.
+     * @param {number} id - The book ID.
+     */
     function deleteBook(id) {
         deleteBookId = id;
         openModal('confirmModal');
+        //showNotification('info', "Confirm deletion of book.");
     }
 
+    /**
+     * Confirms book deletion and sends request to server.
+     */
     function confirmDelete() {
         if (deleteBookId) {
-            const bookCard = document.querySelector(`[onclick="deleteBook(${deleteBookId})"]`).closest('.book-card');
-            bookCard.classList.add('deleting');
-            setTimeout(() => {
-                books = books.filter(b => b.id !== deleteBookId);
-                renderBooks();
-                deleteBookId = null;
-            }, 500);
+            showLoadingModal("Processing...", "Please wait while we delete the book.").then(() => {
+                const bookCard = document.querySelector(`[onclick="deleteBook(${deleteBookId})"]`).closest('.book-card');
+                bookCard.classList.add('deleting');
+
+                $.ajax({
+                    url: apiBaseUrl,
+                    type: 'POST',
+                    data: {
+                        action: 'deleteBook',
+                        bookId: deleteBookId
+                    },
+                    success: function (response) {
+                        hideLoadingModal();
+                        if (response.success) {
+                            setTimeout(() => {
+                                showNotification('success', "Book deleted successfully!");
+                                fetchBooks();
+                                deleteBookId = null;
+                                closeModal('confirmModal');
+                            }, 500);
+                        } else {
+                            bookCard.classList.remove('deleting');
+                            showNotification('error', "Error: " + response.message);
+                            closeModal('confirmModal');
+                        }
+                    },
+                    error: function (xhr, status, error) {
+                        hideLoadingModal();
+                        bookCard.classList.remove('deleting');
+                        showNotification('error', "An error occurred while deleting the book. Please try again.");
+                        console.error("Error:", status, error);
+                        closeModal('confirmModal');
+                    }
+                });
+            });
+        } else {
+            showNotification('error', "No book selected for deletion.");
+            closeModal('confirmModal');
         }
-        closeModal('confirmModal');
     }
 
-    function searchBooks() {
-        const searchTerm = document.getElementById('searchInput').value.toLowerCase();
-        const filteredBooks = books.filter(book =>
-            book.title.toLowerCase().includes(searchTerm) ||
-            book.author.toLowerCase().includes(searchTerm)
-        );
-        renderBooks(filteredBooks);
-    }
-
-    function openModal(modalId) {
-        const modal = document.getElementById(modalId);
-        modal.style.display = 'block';
-        setTimeout(() => modal.classList.add('show'), 10);
-    }
-
-    function closeModal(modalId) {
-        const modal = document.getElementById(modalId);
-        modal.classList.remove('show');
-        setTimeout(() => modal.style.display = 'none', 300);
-    }
-
+    /**
+     * Handles book form submission (add or update).
+     */
 	function handleFormSubmit(e) {
 	    e.preventDefault();
 	    showLoadingModal("Processing...", "Please wait while we save the book data.");
 
-	    // Get form values
 	    const title = document.getElementById('bookTitle').value;
 	    const author = document.getElementById('bookAuthor').value;
 	    const price = parseFloat(document.getElementById('bookPrice').value);
@@ -280,14 +361,12 @@
 	    const categoryId = parseInt(document.getElementById('categoryId').value);
 	    const image = document.getElementById('bookImage').files[0];
 
-	    // Validate required fields
 	    if (!title || !author || isNaN(price) || !description || isNaN(stock) || isNaN(categoryId)) {
-	        showNotification('error', "Please fill in all required fields.");
+	        showNotification('error', "Please fill in all fields.");
 	        hideLoadingModal();
 	        return;
 	    }
 
-	    // Create FormData for multipart/form-data
 	    const formData = new FormData();
 	    formData.append('title', title);
 	    formData.append('author', author);
@@ -296,14 +375,13 @@
 	    formData.append('stock', stock);
 	    formData.append('categoryId', categoryId);
 	    if (image) {
-	        if (!['image/png'].includes(image.type)) {
+	        if (image.type !== 'image/png') {
 	            showNotification('error', "Please select a PNG image.");
 	            hideLoadingModal();
 	            return;
 	        }
 	        formData.append('image', image);
 	    }
-		console.log("Form Data:", currentEditId);
 	    if (currentEditId) {
 	        formData.append('id', currentEditId);
 	        formData.append('action', 'updateBook');
@@ -322,10 +400,7 @@
 	            hideLoadingModal();
 	            if (response.success) {
 	                showNotification('success', currentEditId ? "Book updated successfully!" : "Book added successfully!");
-	                closeModal('bookModal');
-	                fetchBooks(); // Refresh book list
-	                currentEditId = null; // Reset edit ID
-	                document.getElementById('bookForm').reset(); // Reset form
+	                fetchBooks();
 	            } else {
 	                showNotification('error', "Error: " + response.message);
 	            }
@@ -336,31 +411,76 @@
 	            console.error("Error:", status, error);
 	        }
 	    });
+
+	    closeModal('bookModal');
+	    currentEditId = null;
+	    document.getElementById('bookForm').reset();
+	    document.getElementById('bookPreview').style.display = 'none';
 	}
 
+    /**
+     * Handles category form submission.
+     */
+    function handleCategoryFormSubmit(e) {
+        e.preventDefault();
+        showLoadingModal("Processing...", "Please wait while we save the category data.").then(() => {
+            const name = document.getElementById('categoryName').value;
+            const description = document.getElementById('categoryDescription').value;
+
+            if (!name || !description) {
+                showNotification('error', "Please fill in all required fields.");
+                hideLoadingModal();
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('name', name);
+            formData.append('description', description);
+            formData.append('action', 'create');
+
+            $.ajax({
+                url: `${window.contextPath}/CategoryServlet`,
+                type: 'POST',
+                data: formData,
+                contentType: false,
+                processData: false,
+                success: function (response) {
+                    hideLoadingModal();
+                    if (response.success) {
+                        showNotification('success', "Category created successfully!");
+                        fetchCategories();
+                        document.getElementById('categoryForm').reset();
+                        closeModal('categoryModal');
+                    } else {
+                        showNotification('error', "Error: " + response.message);
+                    }
+                },
+                error: function (xhr, status, error) {
+                    hideLoadingModal();
+                    showNotification('error', "An error occurred while creating the category. Please try again.");
+                    console.error("Error:", status, error);
+                }
+            });
+        });
+    }
+
+    /**
+     * Handles clicks outside modals to close them.
+     */
     function handleOutsideClick(event) {
         const modals = document.querySelectorAll('.modal');
         modals.forEach(modal => {
             if (event.target === modal) {
                 closeModal(modal.id);
+                //showNotification('info', `Closed modal: ${modal.id}`);
             }
         });
     }
 
-    function handleCategoryFormSubmit(e) {
-        e.preventDefault();
-        const categoryData = {
-            id: categories.length ? Math.max(...categories.map(c => c.id)) + 1 : 1,
-            name: document.getElementById('categoryName').value,
-            description: document.getElementById('categoryDescription').value,
-            status: 'active'
-        };
-
-        categories.push(categoryData);
-        updateCategoryTable();
-        document.getElementById('categoryForm').reset();
-    }
-
+    /**
+     * Updates the category table with pagination.
+     * @param {string} searchTerm - The search term to filter categories.
+     */
     function updateCategoryTable(searchTerm = '') {
         const categoryTableBody = document.getElementById('categoryTableBody');
         const filteredCategories = categories.filter(cat =>
@@ -405,14 +525,46 @@
             btn.addEventListener('click', (e) => {
                 const id = parseInt(e.target.closest('.action-icon').dataset.id);
                 const category = categories.find(cat => cat.id === id);
-                if (category) {
-                    category.status = category.status === 'active' ? 'inactive' : 'active';
-                    updateCategoryTable(document.getElementById('categorySearch').value);
+                if (!category) {
+                    showNotification('error', "Category not found.");
+                    return;
                 }
+
+                showLoadingModal("Processing...", "Please wait while we update the category status.").then(() => {
+                    const newStatus = category.status === 'active' ? 'inactive' : 'active';
+
+                    $.ajax({
+                        url: `${window.contextPath}/CategoryServlet`,
+                        type: 'POST',
+                        data: {
+                            action: 'changeStatus',
+                            cat_id: id,
+                            status: newStatus
+                        },
+                        success: function (response) {
+                            hideLoadingModal();
+                            if (response.success) {
+                                showNotification('success', "Category status updated successfully!");
+                                fetchCategories();
+                            } else {
+                                showNotification('error', "Error: " + response.message);
+                            }
+                        },
+                        error: function (xhr, status, error) {
+                            hideLoadingModal();
+                            showNotification('error', "An error occurred while updating the category status. Please try again.");
+                            console.error("Error:", status, error);
+                        }
+                    });
+                });
             });
         });
     }
 
+    /**
+     * Updates category pagination controls.
+     * @param {number} totalItems - Total number of filtered categories.
+     */
     function updateCategoryPagination(totalItems) {
         const totalPages = Math.ceil(totalItems / entriesPerPage);
         const categoryPaginationInfo = document.getElementById('categoryPaginationInfo');
@@ -438,34 +590,73 @@
         }
     }
 
+    /**
+     * Filters books based on search input.
+     */
+    function searchBooks() {
+        const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+        const filteredBooks = books.filter(book =>
+            book.title.toLowerCase().includes(searchTerm) ||
+            book.author.toLowerCase().includes(searchTerm)
+        );
+        renderBooks(filteredBooks);
+    }
+
+    /**
+     * Filters categories based on search input.
+     */
     function searchCategories() {
         const searchTerm = document.getElementById('categorySearch').value;
         currentCategoryPage = 1;
         updateCategoryTable(searchTerm);
     }
-	
-	// Event listener for avatar preview
-	   document.getElementById('bookImage').addEventListener('change', function () {
-	       const file = this.files[0];
-	       if (file) {
-	           if (file.type === 'image/png' || file.type === 'image/jpeg') { // Allow PNG and JPEG
-	               const reader = new FileReader();
-	               reader.onload = function (e) {
-	                   const preview = document.getElementById('bookPreview');
-	                   preview.src = e.target.result;
-	                   preview.style.display = 'block';
-	               };
-	               reader.readAsDataURL(file);
-	           } else {
-	               //showNotification('error', "Please select a PNG or JPEG image.", 4000);
-	               this.value = ''; // reset file input
-	               document.getElementById('bookPreview').style.display = 'none';
-	           }
-	       } else {
-	           document.getElementById('bookPreview').style.display = 'none';
-	           document.getElementById('bookPreview').src = '';
-	       }
-	   });
+
+    /**
+     * Opens a modal by ID.
+     * @param {string} modalId - The ID of the modal to open.
+     */
+    function openModal(modalId) {
+        const modal = document.getElementById(modalId);
+        modal.style.display = 'block';
+        setTimeout(() => modal.classList.add('show'), 10);
+    }
+
+    /**
+     * Closes a modal by ID.
+     * @param {string} modalId - The ID of the modal to close.
+     */
+    function closeModal(modalId) {
+        const modal = document.getElementById(modalId);
+        modal.classList.remove('show');
+        setTimeout(() => modal.style.display = 'none', 300);
+    }
+
+    /**
+     * Handles image preview for book form.
+     */
+    document.getElementById('bookImage').addEventListener('change', function () {
+        const file = this.files[0];
+        if (file) {
+            if (['image/png', 'image/jpeg'].includes(file.type)) {
+                const reader = new FileReader();
+                reader.onload = function (e) {
+                    const preview = document.getElementById('bookPreview');
+                    preview.src = e.target.result;
+                    preview.style.display = 'block';
+                    //showNotification('success', "Image preview updated successfully.");
+                };
+                reader.readAsDataURL(file);
+            } else {
+                showNotification('error', "Please select a PNG or JPEG image.", 4000);
+                this.value = '';
+                document.getElementById('bookPreview').style.display = 'none';
+                document.getElementById('bookPreview').src = '';
+            }
+        } else {
+            document.getElementById('bookPreview').style.display = 'none';
+            document.getElementById('bookPreview').src = '';
+        }
+    });
 
     // Expose required functions globally
     window.searchBooks = searchBooks;

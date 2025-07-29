@@ -17,6 +17,12 @@
         --hover-transform: translateY(-5px);
         --border-radius: 10px;
         --large-border-radius: 25px;
+        
+                         /* New notification colors */
+            --success-color: #4CAF50; /* Green */
+            --error-color: #F44336;   /* Red */
+            --info-color: #2196F3;    /* Blue */
+        
     }
 
     .books-container {
@@ -710,7 +716,7 @@
         outline-offset: 2px;
     }
     
-    /* Notification Popup Styles */
+         /* Notification Popup Styles */
         #notificationContainer {
             position: fixed;
             top: 20px;
@@ -934,16 +940,6 @@
 	    <div class="form-group">
 	        <label class="form-label" for="categoryId">Category</label>
 	        <select class="form-input" id="categoryId" required>
-	            <option value="" disabled selected>Select category</option>
-	            <option value="0" style="color:black">Fiction</option>
-	            <option value="1" style="color:black">Non-fiction</option>
-	            <option value="2" style="color:black">Science</option>
-	            <option value="3" style="color:black">Biography</option>
-	            <option value="4" style="color:black">History</option>
-	            <option value="5" style="color:black">Technology</option>
-	            <option value="6" style="color:black">Fantasy</option>
-	            <option value="7" style="color:black">Self-help</option>
-	            <option value="8" style="color:black">Other</option>
 	        </select>
 	    </div>
 	    <div class="form-group">
