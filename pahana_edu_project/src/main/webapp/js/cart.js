@@ -1,34 +1,9 @@
 // Mock Data for Customers and Products
 // Using comprehensive data structures for customers and products
-const customers = [
-    { name: 'John Doe', email: 'john.doe@example.com' },
-    { name: 'Jane Smith', email: 'jane.smith@example.com' },
-    { name: 'Alice Johnson', email: 'alice.j@example.com' },
-    { name: 'Bob Williams', email: 'bob.w@example.com' },
-    { name: 'Charlie Brown', email: 'charlie.b@example.com' },
-    { name: 'David Lee', email: 'david.l@example.com' },
-    { name: 'Emily White', email: 'emily.w@example.com' },
-    { name: 'Frank Green', email: 'frank.g@example.com' },
-    { name: 'Grace Hall', email: 'grace.h@example.com' },
-    { name: 'Henry King', email: 'henry.k@example.com' },
-    { name: 'Ivy Moore', email: 'ivy.m@example.com' },
-    { name: 'Jack Nash', email: 'jack.n@example.com' },
-    { name: 'Karen Owens', email: 'karen.o@example.com' },
-    { name: 'Liam Price', email: 'liam.p@example.com' },
-    { name: 'Mia Quinn', email: 'mia.q@example.com' }
+let customers = [
 ];
 
-const products = [
-    { id: 1, name: 'Laptop Pro X', price: 1200.00, stock: 15 },
-    { id: 2, name: 'Mechanical Keyboard', price: 85.50, stock: 50 },
-    { id: 3, name: 'Wireless Mouse', price: 25.00, stock: 100 },
-    { id: 4, name: 'USB-C Hub', price: 40.00, stock: 30 },
-    { id: 5, name: 'External SSD 1TB', price: 99.99, stock: 20 },
-    { id: 6, name: 'Gaming Headset', price: 75.00, stock: 25 },
-    { id: 7, name: '4K Monitor 27"', price: 350.00, stock: 10 },
-    { id: 8, name: 'Webcam HD', price: 30.00, stock: 60 },
-    { id: 9, name: 'Router Wi-Fi 6', price: 110.00, stock: 18 },
-    { id: 10, name: 'Smartwatch Series 7', price: 299.00, stock: 12 },
+let products = [
 ];
 
 let cartItems = [];
@@ -62,6 +37,95 @@ const elements = {
     paymentMethodSelect: document.getElementById('paymentMethod') // Added this for completeness
 };
 
+function fetchCustomers() {
+    try {
+        $.post(`${window.contextPath}/CustomerServlet`, { action: 'getAllCustomers' }, (response) => {
+            if (response.success && Array.isArray(response.data) && response.data.length > 0) {
+                customers = response.data.map(user => ({
+                    id: user.u_id,
+                    name: user.name,
+                    email: user.email,
+                    phone: user.phone,
+                    acc_nu: user.acc_nu,
+                    status: user.status,
+                    address: user.address || ''
+                }));
+                // Refresh customer autocomplete suggestions if the input is active
+                if (elements.customerNameInput.value.trim().length > 0) {
+                    handleAutocompleteInput(elements.customerNameInput, elements.customerSuggestionsDiv, customers, 'name', selectCustomerSuggestion);
+                }
+            } else {
+                console.warn("No customers found or error in response:", response.message || "Unknown error");
+            }
+        }, 'json').fail(function (xhr, status, error) {
+            console.error("Error fetching customers:", status, error);
+        });
+    } catch (e) {
+        console.error("Error loading customers:", e);
+    }
+}
+
+function fetchProducts() {
+    try {
+        $.post(`${window.contextPath}/BookServlet`, { action: 'listBooks' }, (response) => {
+            if (response.success && Array.isArray(response.books) && response.books.length > 0) {
+                products = response.books.map(book => ({
+                    id: book.id,
+                    name: book.title,
+                    price: parseFloat(book.price) || 0.00,
+                    stock: parseInt(book.stock) || 0
+                }));
+                // Refresh product autocomplete suggestions if the input is active
+                if (elements.productNameInput.value.trim().length > 0) {
+                    handleAutocompleteInput(elements.productNameInput, elements.productSuggestionsDiv, products, 'name', selectProductSuggestion);
+                }
+            } else {
+                console.warn("No products found or error in response:", response.message || "Unknown error");
+            }
+        }, 'json').fail(function (xhr, status, error) {
+            console.error("Error fetching products:", status, error);
+        });
+    } catch (e) {
+        console.error("Error loading products:", e);
+    }
+}
+
+function getInvoiceNumber() {
+    try {
+        $.post(`${window.contextPath}/OrderServlet`, { action: 'getInvoice' }, (response) => {
+            // Ensure response is parsed as JSON
+            if (typeof response === 'string') {
+                try {
+                    response = JSON.parse(response);
+                } catch (e) {
+                    console.error("Error parsing invoice response:", e);
+                    return;
+                }
+            }
+
+            if (response.success && response.invoiceNumber) {
+                nextInvoiceNumber = parseInt(response.invoiceNumber, 10); // Use base 10 explicitly
+                elements.invoiceNumberSpan.textContent = String(nextInvoiceNumber).padStart(2, '0');
+            } else {
+                console.warn("Error fetching invoice number:", response.message || "Unknown error");
+                // Optionally set a fallback invoice number
+                nextInvoiceNumber = nextInvoiceNumber || 10; // Fallback to existing or default
+                elements.invoiceNumberSpan.textContent = String(nextInvoiceNumber).padStart(2, '0');
+            }
+        }, 'json').fail(function (xhr, status, error) {
+            console.error("Error fetching invoice number:", status, error);
+            // Fallback to existing or default invoice number on error
+            nextInvoiceNumber = nextInvoiceNumber || 10;
+            elements.invoiceNumberSpan.textContent = String(nextInvoiceNumber).padStart(2, '0');
+        });
+    } catch (e) {
+        console.error("Error getting invoice number:", e);
+        // Fallback to existing or default invoice number
+        nextInvoiceNumber = nextInvoiceNumber || 10;
+        elements.invoiceNumberSpan.textContent = String(nextInvoiceNumber).padStart(2, '0');
+    }
+}
+
 /**
  * Initializes the purchase management system by setting up event listeners
  * and rendering the initial state.
@@ -79,6 +143,10 @@ function initPurchaseManagement() {
     // Set initial invoice number
     elements.invoiceNumberSpan.textContent = String(nextInvoiceNumber).padStart(2, '0');
     renderCartItems(); // Render initial empty rows
+	getInvoiceNumber();
+	fetchCustomers();
+	fetchProducts();
+	
 
     // Event Listeners for Customer Autocomplete
     elements.customerNameInput.addEventListener('input', () => handleAutocompleteInput(elements.customerNameInput, elements.customerSuggestionsDiv, customers, 'name', selectCustomerSuggestion));
@@ -156,6 +224,8 @@ function initPurchaseManagement() {
     elements.confirmPaymentBtn.addEventListener('click', handleConfirmPayment);
 }
 
+
+
 /**
  * Generic function to handle autocomplete input and display suggestions.
  * @param {HTMLInputElement} inputElement - The input field for autocomplete.
@@ -180,9 +250,21 @@ function handleAutocompleteInput(inputElement, suggestionsElement, dataArray, di
         return;
     }
 
-    const filteredData = dataArray.filter(item =>
-        item[displayKey].toLowerCase().includes(query)
-    ).slice(0, 8); // Limit to 8 suggestions
+    // Ensure dataArray is valid and filter out invalid items
+    if (!Array.isArray(dataArray)) {
+        console.warn("Data array is not valid:", dataArray);
+        const noResults = document.createElement('div');
+        noResults.classList.add('no-results');
+        noResults.textContent = 'No results available';
+        suggestionsElement.appendChild(noResults);
+        suggestionsElement.style.display = 'block';
+        return;
+    }
+
+    const filteredData = dataArray
+        .filter(item => item && typeof item === 'object' && item[displayKey] && typeof item[displayKey] === 'string')
+        .filter(item => item[displayKey].toLowerCase().includes(query))
+        .slice(0, 8); // Limit to 8 suggestions
 
     if (filteredData.length > 0) {
         filteredData.forEach(item => {
