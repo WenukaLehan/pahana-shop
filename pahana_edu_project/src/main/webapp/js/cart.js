@@ -37,6 +37,52 @@ const elements = {
     paymentMethodSelect: document.getElementById('paymentMethod') // Added this for completeness
 };
 
+
+/**
+ * Shows a notification popup.
+ * @param {'success'|'error'|'info'} type - Type of notification (e.g., 'success', 'error', 'info').
+ * @param {string} message - The message to display in the notification.
+ * @param {number} duration - How long the notification should be visible in milliseconds (default: 3000).
+ */
+function showNotification( message, type, duration = 3000) {
+    const container = document.getElementById('notificationContainer');
+    const notification = document.createElement('div');
+    notification.classList.add('notification-popup', type);
+
+    let iconClass = '';
+    let title = '';
+    if (type === 'success') {
+        iconClass = 'fa-solid fa-circle-check';
+        title = 'Success!';
+    } else if (type === 'error') {
+        iconClass = 'fa-solid fa-circle-xmark';
+        title = 'Error!';
+    } else {
+        iconClass = 'fa-solid fa-circle-info';
+        title = 'Info';
+    }
+
+    notification.innerHTML = `
+        <div class="notification-icon"><i class="${iconClass}"></i></div>
+        <div class="notification-content">
+            <div class="notification-title">${title}</div>
+            <div class="notification-message">${message}</div>
+        </div>
+        <button class="notification-close" onclick="this.closest('.notification-popup').remove();">&times;</button>
+    `;
+
+    container.appendChild(notification);
+
+    // Remove the notification after a duration, allowing animation to complete
+    setTimeout(() => {
+        notification.style.animation = 'fadeOut 0.5s forwards'; // Trigger fade out animation
+        setTimeout(() => {
+            notification.remove();
+        }, 500); // Remove from DOM after fade out completes
+    }, duration);
+}
+
+
 function fetchCustomers() {
     try {
         $.post(`${window.contextPath}/CustomerServlet`, { action: 'getAllCustomers' }, (response) => {
@@ -141,7 +187,7 @@ function initPurchaseManagement() {
     }
 
     // Set initial invoice number
-    elements.invoiceNumberSpan.textContent = String(nextInvoiceNumber).padStart(2, '0');
+    //elements.invoiceNumberSpan.textContent = String(nextInvoiceNumber).padStart(2, '0');
     renderCartItems(); // Render initial empty rows
 	getInvoiceNumber();
 	fetchCustomers();
@@ -635,39 +681,230 @@ function updateBalance() {
 /**
  * Handles the confirmation of payment.
  */
+/**
+ * Helper function to get the selected customer's ID.
+ * @returns {number|null} The customer ID or null if not found.
+ */
+function getSelectedCustomerId() {
+    const customerName = elements.customerNameInput.value.trim();
+    if (!customerName) {
+        console.error("No customer name entered.");
+        return null;
+    }
+    const selectedCustomer = customers.find(c => c.name.toLowerCase() === customerName.toLowerCase());
+    if (!selectedCustomer) {
+        console.error(`Customer '${customerName}' not found in customers list.`);
+        return null;
+    }
+    if (!selectedCustomer.id ) {
+        console.error(`Invalid customer ID for '${customerName}':`, selectedCustomer.id);
+        return null;
+    }
+    return selectedCustomer.id;
+}
+/**
+ * Handles the confirmation of payment and sends the order to the backend.
+ */
+/**
+ * Handles the confirmation of payment and sends the order to the backend.
+ */
 function handleConfirmPayment() {
     const total = parseFloat(elements.modalTotalAmountInput.value);
     const amountPaid = parseFloat(elements.amountPaidInput.value);
     const balance = amountPaid - total;
+    const paymentMethod = elements.paymentMethodSelect.value;
+    const customerId = getSelectedCustomerId();
+	const customerEmail = elements.customerEmailInput.value.trim();
 
+    // Validate inputs
+    if (isNaN(total) || total <= 0) {
+        console.error("Invalid total amount:", elements.modalTotalAmountInput.value);
+        // Using a custom message box instead of alert()
+        showNotification('Invalid total amount. Please ensure the cart has valid items.', 'Error');
+        return;
+    }
     if (isNaN(amountPaid) || amountPaid < total) {
-        console.error('Amount paid is insufficient.');
+        console.error("Amount paid is insufficient:", amountPaid, "Total:", total);
+        showNotification('Amount paid is insufficient. Please enter an amount equal to or greater than the total.', 'Error');
+        return;
+    }
+    if (!customerId) {
+        console.error("No valid customer selected. Customer name:", elements.customerNameInput.value);
+        showNotification('Please select a valid customer from the suggestions.', 'Error');
+        return;
+    }
+    if (cartItems.length === 0) {
+        console.error("Cart is empty.");
+        showNotification('Cart is empty. Please add items before confirming payment.', 'Error');
+        return;
+    }
+    if (!paymentMethod) {
+        console.error("No payment method selected.");
+        showNotification('Please select a payment method.', 'Error');
         return;
     }
 
-    // Simulate printing/saving invoice
-    console.log('--- Invoice Details ---');
-    console.log(`Invoice No: ${elements.invoiceNumberSpan.textContent}`);
-    console.log(`Customer: ${elements.customerNameInput.value || 'N/A'} (${elements.customerEmailInput.value || 'N/A'})`);
-    console.log('Items:');
-    cartItems.forEach(item => {
-        console.log(`- ${item.name} x ${item.quantity} @ Rs.${item.unitPrice.toFixed(2)} = Rs.${item.total.toFixed(2)}`);
-    });
-    console.log(`Total: Rs.${total.toFixed(2)}`);
-    console.log(`Amount Paid: Rs.${amountPaid.toFixed(2)}`);
-    console.log(`Balance: Rs.${balance.toFixed(2)}`);
-    console.log('Payment successful!');
+    // Prepare order data
+    const orderData = {
+        customerId: customerId,
+        total: total,
+        method: paymentMethod,
+        items: cartItems.map(item => ({
+            productId: item.id,
+            quantity: item.quantity,
+            price: item.unitPrice
+        }))
+    };
 
-    // Reset the cart and generate a new invoice number
-    cartItems = [];
-    nextInvoiceNumber++;
-    elements.invoiceNumberSpan.textContent = String(nextInvoiceNumber).padStart(2, '0');
-    elements.customerNameInput.value = '';
-    elements.customerEmailInput.value = '';
-    renderCartItems();
-    calculateTotals();
-    closeModal('paymentModal');
+    // Log order data for debugging
+    console.log("Sending order data:", orderData);
+
+    // Send order to backend
+    try {
+        $.post(`${window.contextPath}/OrderServlet`, {
+            action: 'placeOrder',
+            customerId: orderData.customerId.toString(), // Ensure string
+            total: orderData.total.toFixed(2), // Ensure string with 2 decimal places
+            method: orderData.method,
+			invoiceNumber: elements.invoiceNumberSpan.textContent,
+            items: JSON.stringify(orderData.items)
+        }, (response) => {
+            // Handle response
+            if (typeof response === 'string') {
+                try {
+                    response = JSON.parse(response);
+                } catch (e) {
+                    console.error("Error parsing placeOrder response:", e, "Raw response:", response);
+                    showNotification('Error processing order: Invalid server response.', 'Error');
+                    return;
+                }
+            }
+
+            if (response.success) {
+				// Log invoice details for debugging
+				console.log('--- Invoice Details ---');
+				console.log(`Invoice No: ${response.invoiceNumber || elements.invoiceNumberSpan.textContent}`);
+				console.log(`Customer: ${elements.customerNameInput.value || 'N/A'} (${elements.customerEmailInput.value || 'N/A'})`);
+				console.log('Items:');
+				cartItems.forEach(item => {
+				    console.log(`- ${item.name} x ${item.quantity} @ Rs.${item.unitPrice.toFixed(2)} = Rs.${item.total.toFixed(2)}`);
+				});
+				console.log(`Total: Rs.${total.toFixed(2)}`);
+				console.log(`Amount Paid: Rs.${amountPaid.toFixed(2)}`);
+				console.log(`Balance: Rs.${balance.toFixed(2)}`);
+				console.log('Payment successful!');
+
+				// Generate PDF
+				const { jsPDF } = window.jspdf;
+				const doc = new jsPDF();
+				const pageWidth = doc.internal.pageSize.getWidth();
+				const margin = 15;
+				let yPos = 20;
+
+				// Header
+				doc.setFontSize(18);
+				doc.text("Invoice", margin, yPos);
+				yPos += 10;
+				doc.setFontSize(12);
+				doc.text(`Invoice No: ${response.invoiceNumber || elements.invoiceNumberSpan.textContent}`, margin, yPos);
+				yPos += 10;
+
+				// Customer Details
+				doc.text(`Customer: ${elements.customerNameInput.value || 'N/A'}`, margin, yPos);
+				yPos += 7;
+				doc.text(`Email: ${elements.customerEmailInput.value || 'N/A'}`, margin, yPos);
+				yPos += 10;
+
+				// Items Table Header
+				doc.setFontSize(10);
+				doc.text("Item", margin, yPos);
+				doc.text("Qty", margin + 80, yPos);
+				doc.text("Unit Price", margin + 100, yPos);
+				doc.text("Total", margin + 130, yPos);
+				yPos += 5;
+				doc.line(margin, yPos, pageWidth - margin, yPos); // Horizontal line
+				yPos += 5;
+
+				// Items Table Rows
+				cartItems.forEach(item => {
+				    doc.text(item.name, margin, yPos, { maxWidth: 75 }); // Wrap long names
+				    doc.text(item.quantity.toString(), margin + 80, yPos);
+				    doc.text(`Rs.${item.unitPrice.toFixed(2)}`, margin + 100, yPos);
+				    doc.text(`Rs.${item.total.toFixed(2)}`, margin + 130, yPos);
+				    yPos += 10;
+				});
+
+				// Summary
+				yPos += 5;
+				doc.line(margin, yPos, pageWidth - margin, yPos); // Horizontal line
+				yPos += 5;
+				doc.text(`Total: Rs.${total.toFixed(2)}`, margin + 130, yPos);
+				yPos += 7;
+				doc.text(`Amount Paid: Rs.${amountPaid.toFixed(2)}`, margin + 130, yPos);
+				yPos += 7;
+				doc.text(`Balance: Rs.${balance.toFixed(2)}`, margin + 130, yPos);
+
+				// --- CHANGED: Open PDF in new window for printing instead of direct print() ---
+				// Opens PDF in a new window/tab, which can then be printed by the user.
+				// doc.print(); // Original line, now commented out
+				// doc.save(`invoice_${invoiceNumber}.pdf`); // Original line, now commented out
+
+				// Send PDF to backend for emailing
+                const pdfBase64 = doc.output('datauristring').split(',')[1]; // Get base64 part
+                $.post(`${window.contextPath}/OrderServlet`, {
+                    action: 'sendBill',
+                    email: customerEmail,
+                    invoiceNumber: response.invoiceNumber,
+                    pdfData: pdfBase64
+                }, (emailResponse) => {
+                    if (typeof emailResponse === 'string') {
+                        try {
+                            emailResponse = JSON.parse(emailResponse);
+                        } catch (e) {
+                            console.error("Error parsing sendInvoiceEmail response:", e, "Raw response:", emailResponse);
+                            showNotification('Error sending invoice email: Invalid server response.', 'Error');
+                            return;
+                        }
+                    }
+                    if (emailResponse.success) {
+                        console.log("Invoice email sent successfully to:", customerEmail);
+                        // --- CHANGED: Updated alert message ---
+                        showNotification('Order placed successfully! Invoice opened for printing and emailed to ' + customerEmail, 'Success');
+                    } else {
+                        console.warn("Error sending invoice email:", emailResponse.message || "Unknown error");
+                        showNotification(`Order placed successfully, but failed to send invoice email: ${emailResponse.message || 'Unknown error'}`, 'Warning');
+                    }
+                }, 'json').fail(function (xhr, status, error) {
+                    console.error("Error sending invoice email:", status, error, "Response:", xhr.responseText);
+                    showNotification('Order placed successfully, but error sending invoice email. Please try again.', 'Error');
+                });
+				
+				doc.output('dataurlnewwindow'); 
+
+				// Reset the cart and UI
+				cartItems = [];
+				elements.customerNameInput.value = '';
+				elements.customerEmailInput.value = '';
+				renderCartItems();
+				calculateTotals();
+				closeModal('paymentModal');
+
+				// Fetch the next invoice number
+				getInvoiceNumber();
+				// --- CHANGED: Removed redundant alert, as it's handled by the email response ---
+				// showMessageBox('Order placed successfully! Invoice printed.', 'Success');
+            } else {
+                console.warn("Error placing order:", response.message || "Unknown error");
+                showNotification(`Failed to place order: ${response.message || 'Unknown error'}`, 'Error');
+            }
+        }, 'json').fail(function (xhr, status, error) {
+            console.error("Error placing order:", status, error, "Response:", xhr.responseText);
+            showNotification('Error communicating with the server. Please try again.', 'Error');
+        });
+    } catch (e) {
+        console.error("Unexpected error placing order:", e);
+        showNotification('An unexpected error occurred while placing the order.', 'Error');
+    }
 }
-
 // The initPurchaseManagement function is called from the HTML's DOMContentLoaded listener.
 // This ensures all elements are loaded before the script tries to access them.

@@ -2,7 +2,128 @@
 
 <link rel="stylesheet" href="../css/cart.css">
 
+<style>
+
+    /* Global Styles */
+    :root{
+        /* New notification colors */
+            --success-color: #4CAF50; /* Green */
+            --error-color: #F44336;   /* Red */
+            --info-color: #2196F3;    /* Blue */
+    }
+
+         /* Notification Popup Styles */
+        #notificationContainer {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1001;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            pointer-events: none; /* Allow clicks to pass through if no notifications */
+        }
+
+        .notification-popup {
+            background: var(--glass-background);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--border-radius);
+            padding: 15px 20px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            min-width: 280px;
+            max-width: 350px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            transform: translateX(100%);
+            opacity: 0;
+            animation: slideIn 0.5s forwards, fadeOut 0.5s 2.5s forwards; /* Slide in, then fade out after 2.5s delay */
+            pointer-events: all; /* Re-enable clicks for the notification itself */
+        }
+
+        .notification-popup.success {
+            border-left: 5px solid var(--success-color);
+        }
+
+        .notification-popup.error {
+            border-left: 5px solid var(--error-color);
+        }
+
+        .notification-popup.info {
+            border-left: 5px solid var(--info-color);
+        }
+
+        .notification-icon {
+            font-size: 24px;
+            color: var(--text-primary);
+        }
+
+        .notification-popup.success .notification-icon {
+            color: var(--success-color);
+        }
+
+        .notification-popup.error .notification-icon {
+            color: var(--error-color);
+        }
+
+        .notification-popup.info .notification-icon {
+            color: var(--info-color);
+        }
+
+        .notification-content {
+            flex-grow: 1;
+        }
+
+        .notification-title {
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 5px;
+            font-size: 16px;
+        }
+
+        .notification-message {
+            color: var(--text-secondary);
+            font-size: 14px;
+        }
+
+        .notification-close {
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            font-size: 18px;
+            cursor: pointer;
+            padding: 5px;
+            border-radius: 50%;
+            transition: background var(--transition-speed) ease;
+        }
+
+        .notification-close:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        @keyframes slideIn {
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        @keyframes fadeOut {
+            from {
+                opacity: 1;
+            }
+            to {
+                opacity: 0;
+                transform: translateX(100%);
+            }
+        }
+</style>
+
 <div class="purchase-container">
+
+
+
     <div class="invoice-header">
         <h2>Invoice No : <span class="invoice-number-input" id="invoiceNumber">09</span></h2>
     </div>
@@ -112,6 +233,11 @@
         </div>
     </div>
 </div>
+
+	<!-- Notification Container -->
+    <div id="notificationContainer">
+        <!-- Notifications will be appended here -->
+    </div>
 
 <div class="modal" id="paymentModal">
     <div class="modal-content">

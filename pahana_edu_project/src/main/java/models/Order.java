@@ -5,10 +5,10 @@ import java.util.List;
 public class Order {
 	
 	private int orderId;
-	private int customerId;
+	private String customerId;
 	private String orderDate;
 	private double totalAmount;
-	private String status;
+	private String method;
 	private List<OrderItem> orderItems;
 	
 	public int getOrderId() {
@@ -17,10 +17,10 @@ public class Order {
 	public void setOrderId(int orderId) {
 		this.orderId = orderId;
 	}
-	public int getCustomerId() {
+	public String getCustomerId() {
 		return customerId;
 	}
-	public void setCustomerId(int customerId) {
+	public void setCustomerId(String customerId) {
 		this.customerId = customerId;
 	}
 	public String getOrderDate() {
@@ -35,11 +35,11 @@ public class Order {
 	public void setTotalAmount(double totalAmount) {
 		this.totalAmount = totalAmount;
 	}
-	public String getStatus() {
-		return status;
+	public String getMethod() {
+		return method;
 	}
-	public void setStatus(String status) {
-		this.status = status;
+	public void setMethod(String status) {
+		this.method = status;
 	}
 	public List<OrderItem> getOrderItems() {
 		return orderItems;
@@ -47,12 +47,12 @@ public class Order {
 	public void setOrderItems(List<OrderItem> orderItems) {
 		this.orderItems = orderItems;
 	}
-	public Order(int orderId, int customerId, String orderDate, double totalAmount, String status, List<OrderItem> orderItems) {
+	public Order(int orderId, String customerId, String orderDate, double totalAmount, String status, List<OrderItem> orderItems) {
 		this.orderId = orderId;
 		this.customerId = customerId;
 		this.orderDate = orderDate;
 		this.totalAmount = totalAmount;
-		this.status = status;
+		this.method = status;
 		this.orderItems = orderItems;
 	}
 	public Order() {
@@ -61,63 +61,3 @@ public class Order {
 }
 
 
-class OrderItem {
-	
-	private int orderItemId;
-	private int orderId;
-	private int productId;
-	private int quantity;
-	private double price;
-	
-	public OrderItem(int orderItemId, int orderId, int productId, int quantity, double price) {
-		this.orderItemId = orderItemId;
-		this.orderId = orderId;
-		this.productId = productId;
-		this.quantity = quantity;
-		this.price = price;
-	}
-	public OrderItem() {
-		// Default constructor
-	}
-
-	// Getters and Setters
-	public int getOrderItemId() {
-		return orderItemId;
-	}
-
-	public void setOrderItemId(int orderItemId) {
-		this.orderItemId = orderItemId;
-	}
-
-	public int getOrderId() {
-		return orderId;
-	}
-
-	public void setOrderId(int orderId) {
-		this.orderId = orderId;
-	}
-
-	public int getProductId() {
-		return productId;
-	}
-
-	public void setProductId(int productId) {
-		this.productId = productId;
-	}
-
-	public int getQuantity() {
-		return quantity;
-	}
-
-	public void setQuantity(int quantity) {
-		this.quantity = quantity;
-	}
-
-	public double getPrice() {
-		return price;
-	}
-
-	public void setPrice(double price) {
-		this.price = price;
-	}
-}

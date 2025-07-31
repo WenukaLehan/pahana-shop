@@ -14,6 +14,8 @@
     --hover-transform: translateY(-5px);
     --border-radius: 10px;
     --large-border-radius: 25px;
+    
+              
 }
 
 body {
@@ -607,3 +609,6 @@ body {
         padding: 20px;
     }
 }
+
+
+
