@@ -17,15 +17,17 @@
 }
 
 body {
-    margin: 0;
+  margin: 0;
     padding: 0;
-    background-color: #f0f2f5;
-    font-family: 'Poppins', sans-serif;
+    background-color: #f0f2f5; /* A light, neutral background for the overall page */
+    font-family: 'Poppins', sans-serif; /* Using Poppins as specified */
     display: flex;
     justify-content: center;
-    align-items: center;
+    align-items: flex-start; /* Align to start to allow scroll if content is tall */
     min-height: 100vh;
     box-sizing: border-box;
+    padding-top: 0px; /* Add some top padding to prevent content from touching the very top */
+    padding-bottom: 50px; /* Add some bottom padding */
 }
 
 .settings-container {

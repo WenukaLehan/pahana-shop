@@ -1,5 +1,6 @@
 @charset "UTF-8";
 
+/* Root CSS Variables for consistent theming */
 :root {
     --primary-color: rgba(31, 5, 2, 1);
     --secondary-color: rgba(133, 72, 7, 1);
@@ -16,31 +17,35 @@
     --large-border-radius: 25px;
 }
 
+/* Global Styles */
 body {
     margin: 0;
     padding: 0;
-    background-color: #f0f2f5;
-    font-family: 'Poppins', sans-serif;
+    background-color: #f0f2f5; /* A light, neutral background for the overall page */
+    font-family: 'Poppins', sans-serif; /* Using Poppins as specified */
     display: flex;
     justify-content: center;
-    align-items: center;
+    align-items: flex-start; /* Align to start to allow scroll if content is tall */
     min-height: 100vh;
     box-sizing: border-box;
+    padding-top: 0px; /* Add some top padding to prevent content from touching the very top */
+    padding-bottom: 50px; /* Add some bottom padding */
 }
 
+/* Main Container for the Reports Dashboard */
 .reports-container {
     padding: 20px;
-    background: var(--background-gradient);
-    min-height: 90vh;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-    color: var(--text-primary);
-    border-radius: 15px;
-    margin: 20px auto;
+    background: var(--background-gradient); /* Gradient background for the main container */
+    min-height: 90vh; /* Minimum height to ensure it fills most of the viewport */
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; /* Fallback fonts */
+    color: var(--text-primary); /* Primary text color (white) */
+    border-radius: 15px; /* Rounded corners for the container */
+    margin: 20px auto; /* Center the container with some margin */
     display: flex;
-    flex-direction: column;
-    box-shadow: 0 10px 35px rgba(0, 0, 0, 0.12);
-    max-width: 1400px;
-    width: 95%;
+    flex-direction: column; /* Stack sections vertically */
+    box-shadow: 0 10px 35px rgba(0, 0, 0, 0.12); /* Subtle shadow for depth */
+    max-width: 1400px; /* Max width to prevent it from becoming too wide on large screens */
+    width: 95%; /* Responsive width */
     box-sizing: border-box;
     padding-left: 35px;
     padding-right: 35px;
@@ -52,59 +57,59 @@ body {
 }
 
 .reports-header h2 {
-    background: linear-gradient(45deg, #d08726, #032831);
+    background: linear-gradient(45deg, #d08726, #032831); /* Gradient for the header title */
     color: white;
     padding: 12px 20px;
-    border-radius: 20px;
-    display: inline-block;
+    border-radius: 20px; /* Pill-shaped background */
+    display: inline-block; /* Allows padding and margin, wraps content */
     margin-bottom: 0;
     font-weight: 600;
     font-size: 20px;
     cursor: pointer;
-    transition: all 0.3s ease;
+    transition: all 0.3s ease; /* Smooth transition for hover effects */
 }
 
 .reports-header h2:hover {
-    transform: scale(1.02);
-    box-shadow: 0 5px 15px rgba(10, 92, 107, 0.3);
+    transform: scale(1.02); /* Slight scale up on hover */
+    box-shadow: 0 5px 15px rgba(10, 92, 107, 0.3); /* Shadow on hover */
 }
 
 /* Filter Section */
 .filter-section {
-    background: #f8f9fa;
+    background: #f8f9fa; /* Light background for the filter section */
     border-radius: 12px;
     padding: 20px;
     margin-bottom: 20px;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    box-shadow: 0 2px 10px rgba(0,0,0,0.05); /* Soft shadow */
 }
 
 .filter-row {
     display: grid;
-    grid-template-columns: 1fr 1fr 2fr;
-    gap: 25px;
-    align-items: end;
+    grid-template-columns: 1fr 1fr 2fr; /* Three columns, last one wider for custom dates */
+    gap: 25px; /* Space between grid items */
+    align-items: end; /* Align items to the bottom */
     margin-bottom: 15px;
 }
 
 .filter-group {
     display: flex;
-    flex-direction: column;
+    flex-direction: column; /* Stack label and input vertically */
 }
 
 .filter-group label {
     margin-bottom: 8px;
     font-weight: 600;
-    color: #032831;
+    color: #032831; /* Dark text for labels */
     font-size: 14px;
 }
 
 .date-inputs {
-    grid-column: span 1;
+    grid-column: span 1; /* Occupy one column in the grid */
 }
 
 .date-row {
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: 1fr 1fr; /* Two columns for from/to dates */
     gap: 15px;
 }
 
@@ -113,20 +118,21 @@ body {
     flex-direction: column;
 }
 
+/* Form Inputs and Selects */
 .form-input, .form-select {
     padding: 10px 12px;
-    border: 2px solid #e0e0e0;
+    border: 2px solid #e0e0e0; /* Light border */
     border-radius: 8px;
     font-size: 14px;
-    transition: all 0.3s ease;
-    box-sizing: border-box;
-    color: #333;
+    transition: all 0.3s ease; /* Smooth transition for focus effects */
+    box-sizing: border-box; /* Include padding and border in element's total width and height */
+    color: #333; /* Dark text color */
 }
 
 .form-input:focus, .form-select:focus {
-    border-color: #0a5c6b;
-    outline: none;
-    box-shadow: 0 0 8px rgba(10, 92, 107, 0.2);
+    border-color: #0a5c6b; /* Accent color on focus */
+    outline: none; /* Remove default outline */
+    box-shadow: 0 0 8px rgba(10, 92, 107, 0.2); /* Soft shadow on focus */
 }
 
 .form-select.small {
@@ -134,11 +140,12 @@ body {
     font-size: 13px;
 }
 
+/* Filter Actions (Buttons) */
 .filter-actions {
     display: flex;
     gap: 15px;
-    justify-content: flex-end;
-    flex-wrap: wrap;
+    justify-content: flex-end; /* Align buttons to the right */
+    flex-wrap: wrap; /* Allow buttons to wrap on smaller screens */
 }
 
 .action-btn {
@@ -152,9 +159,9 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 8px;
+    gap: 8px; /* Space between icon and text */
     transition: all 0.3s ease;
-    min-width: 140px;
+    min-width: 140px; /* Minimum width for buttons */
 }
 
 .btn-icon {
@@ -163,42 +170,42 @@ body {
 }
 
 .generate {
-    background: linear-gradient(135deg, #27ae60, #2ecc71);
+    background: linear-gradient(135deg, #27ae60, #2ecc71); /* Green gradient for generate button */
 }
 
 .export {
-    background: linear-gradient(135deg, #3498db, #2980b9);
+    background: linear-gradient(135deg, #3498db, #2980b9); /* Blue gradient for export button */
 }
 
 .action-btn:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+    transform: translateY(-2px); /* Slight lift on hover */
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2); /* Stronger shadow on hover */
 }
 
-/* Summary Cards */
+/* Summary Cards Section */
 .summary-section {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); /* Responsive grid for cards */
     gap: 20px;
     margin-bottom: 25px;
 }
 
 .summary-card {
-    background: var(--glass-background);
-    backdrop-filter: blur(20px);
-    border: 1px solid var(--glass-border);
+    background: var(--glass-background); /* Glassmorphism effect */
+    backdrop-filter: blur(20px); /* Blur effect for glassmorphism */
+    border: 1px solid var(--glass-border); /* Border for glassmorphism */
     border-radius: var(--border-radius);
     padding: 20px;
     display: flex;
     align-items: center;
     gap: 15px;
     transition: all var(--transition-speed) ease;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1); /* Soft shadow */
 }
 
 .summary-card:hover {
-    transform: var(--hover-transform);
-    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+    transform: var(--hover-transform); /* Lift on hover */
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15); /* Stronger shadow on hover */
 }
 
 .card-icon {
@@ -208,7 +215,7 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
-    flex-shrink: 0;
+    flex-shrink: 0; /* Prevent icon from shrinking */
 }
 
 .card-icon svg {
@@ -216,6 +223,7 @@ body {
     height: 24px;
 }
 
+/* Specific icon backgrounds */
 .sales-icon {
     background: linear-gradient(135deg, #27ae60, #2ecc71);
 }
@@ -233,7 +241,7 @@ body {
 }
 
 .card-content {
-    flex-grow: 1;
+    flex-grow: 1; /* Allow content to take available space */
 }
 
 .card-content h3 {
@@ -257,13 +265,13 @@ body {
 }
 
 .trend.positive {
-    background: rgba(39, 174, 96, 0.2);
-    color: #27ae60;
+    background: rgba(39, 174, 96, 0.2); /* Light green background */
+    color: #27ae60; /* Green text */
 }
 
 .trend.negative {
-    background: rgba(231, 76, 60, 0.2);
-    color: #e74c3c;
+    background: rgba(231, 76, 60, 0.2); /* Light red background */
+    color: #e74c3c; /* Red text */
 }
 
 /* Charts Section */
@@ -300,7 +308,7 @@ body {
 }
 
 .chart-btn {
-    background: #e9ecef;
+    background: #e9ecef; /* Light gray background */
     border: none;
     padding: 8px 16px;
     border-radius: 6px;
@@ -308,17 +316,17 @@ body {
     font-size: 13px;
     font-weight: 500;
     transition: all 0.3s ease;
-    color: #495057;
+    color: #495057; /* Dark gray text */
 }
 
 .chart-btn.active,
 .chart-btn:hover {
-    background: linear-gradient(135deg, #0a5c6b, #032831);
+    background: linear-gradient(135deg, #0a5c6b, #032831); /* Dark blue gradient on active/hover */
     color: white;
 }
 
 .chart-content {
-    height: 300px;
+    height: 300px; /* Fixed height for the chart */
     display: flex;
     align-items: center;
     justify-content: center;
@@ -326,15 +334,15 @@ body {
 }
 
 #salesChartCanvas {
-    width: 100% !important;
-    height: 100% !important;
+    width: 100% !important; /* Ensure canvas takes full width of its container */
+    height: 100% !important; /* Ensure canvas takes full height of its container */
 }
 
-/* Reports Table */
+/* Reports Table Section */
 .reports-table-section {
     background: #f8f9fa;
     border-radius: 12px;
-    overflow: hidden;
+    overflow: hidden; /* Hide overflow for rounded corners */
     box-shadow: 0 2px 10px rgba(0,0,0,0.05);
 }
 
@@ -343,7 +351,7 @@ body {
     justify-content: space-between;
     align-items: center;
     padding: 20px;
-    background: linear-gradient(90deg, #802a0f, #032831);
+    background: linear-gradient(90deg, #802a0f, #032831); /* Dark gradient for table header */
     color: white;
     flex-wrap: wrap;
     gap: 15px;
@@ -364,16 +372,16 @@ body {
 
 .search-input {
     padding: 8px 12px;
-    border: 2px solid rgba(255, 255, 255, 0.3);
+    border: 2px solid rgba(255, 255, 255, 0.3); /* Transparent white border */
     border-radius: 6px;
-    background: rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.1); /* Slightly transparent white background */
     color: white;
     font-size: 13px;
     min-width: 200px;
 }
 
 .search-input::placeholder {
-    color: rgba(255, 255, 255, 0.7);
+    color: rgba(255, 255, 255, 0.7); /* Lighter placeholder text */
 }
 
 .search-input:focus {
@@ -383,43 +391,43 @@ body {
 }
 
 .reports-table {
-    overflow-x: auto;
+    overflow-x: auto; /* Enable horizontal scrolling for tables on small screens */
 }
 
 .reports-table table {
     width: 100%;
-    border-collapse: collapse;
-    table-layout: fixed;
+    border-collapse: collapse; /* Collapse table borders */
+    table-layout: fixed; /* Fixed table layout to prevent content from pushing columns too wide */
 }
 
 .reports-table th {
-    background: linear-gradient(90deg, #6d2610, #021e24);
+    background: linear-gradient(90deg, #6d2610, #021e24); /* Slightly darker gradient for table head */
     color: white;
     padding: 12px 10px;
     text-align: left;
     font-weight: 600;
     font-size: 13px;
-    position: sticky;
+    position: sticky; /* Sticky header for scrolling tables */
     top: 0;
     z-index: 10;
 }
 
 .reports-table td {
     padding: 12px 10px;
-    border-bottom: 1px solid #e0e0e0;
+    border-bottom: 1px solid #e0e0e0; /* Light border between rows */
     font-size: 13px;
-    word-wrap: break-word;
-    color: #032831;
+    word-wrap: break-word; /* Allow long words to break */
+    color: #032831; /* Dark text for table cells */
     font-weight: 500;
     font-family: 'Poppins', sans-serif;
 }
 
 .reports-table tr:nth-child(even) {
-    background-color: #f8f9fa;
+    background-color: #f8f9fa; /* Alternate row background color */
 }
 
 .reports-table tr:hover {
-    background-color: #e8f4f8;
+    background-color: #e8f4f8; /* Highlight row on hover */
 }
 
 .status-badge {
@@ -430,6 +438,7 @@ body {
     text-transform: uppercase;
 }
 
+/* Specific status badge colors */
 .status-completed {
     background: rgba(39, 174, 96, 0.2);
     color: #27ae60;
@@ -440,18 +449,29 @@ body {
     color: #f39c12;
 }
 
-.status-cancelled {
+.status-cancelled, .status-outofstock, .status-failed {
     background: rgba(231, 76, 60, 0.2);
     color: #e74c3c;
 }
 
-/* Table Footer */
+.status-instock {
+    background: rgba(39, 174, 96, 0.2);
+    color: #27ae60;
+}
+
+.status-lowstock, .status-onorder {
+    background: rgba(243, 156, 18, 0.2);
+    color: #f39c12;
+}
+
+
+/* Table Footer (Pagination) */
 .table-footer {
     display: flex;
     justify-content: space-between;
     align-items: center;
     padding: 15px 20px;
-    background: #f1f3f4;
+    background: #f1f3f4; /* Light background for footer */
     border-top: 1px solid #e0e0e0;
     flex-wrap: wrap;
     gap: 15px;
@@ -503,7 +523,8 @@ body {
     font-size: 13px;
     transition: all 0.3s ease;
     color: #495057;
-    min-width: 36px;
+    min-width: 36px; /* Ensure consistent width for page numbers */
+    text-align: center;
 }
 
 .page-number.active,
@@ -514,21 +535,21 @@ body {
 
 /* Modal Styles */
 .modal {
-    display: none;
-    position: fixed;
+    display: none; /* Hidden by default */
+    position: fixed; /* Stay in place */
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
-    background: rgba(0, 0, 0, 0.8);
-    z-index: 1000;
-    backdrop-filter: blur(10px);
+    background: rgba(0, 0, 0, 0.8); /* Dark overlay */
+    z-index: 1000; /* Sit on top */
+    backdrop-filter: blur(10px); /* Blur background behind modal */
     justify-content: center;
     align-items: center;
 }
 
 .modal.show {
-    display: flex;
+    display: flex; /* Show when 'show' class is added */
 }
 
 .modal-content {
@@ -538,10 +559,10 @@ body {
     padding: 30px;
     border-radius: var(--large-border-radius);
     max-width: 500px;
-    width: 90%;
-    max-height: 80vh;
-    overflow-y: auto;
-    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+    width: 90%; /* Responsive width */
+    max-height: 80vh; /* Max height to prevent overflow on small screens */
+    overflow-y: auto; /* Enable scrolling for modal content if it overflows */
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3); /* Stronger shadow for modals */
     box-sizing: border-box;
 }
 
@@ -556,7 +577,7 @@ body {
     border: 4px solid rgba(255, 255, 255, 0.3);
     border-top: 4px solid white;
     border-radius: 50%;
-    animation: spin 1s linear infinite;
+    animation: spin 1s linear infinite; /* Spinning animation */
     margin: 0 auto 20px auto;
 }
 
@@ -606,11 +627,11 @@ body {
 }
 
 .close-btn:hover {
-    background: rgba(139, 69, 19, 0.3);
+    background: rgba(139, 69, 19, 0.3); /* Accent color on hover */
     transform: scale(1.1);
 }
 
-/* Export Options */
+/* Export Options in Modal */
 .export-options {
     display: flex;
     flex-direction: column;
@@ -650,16 +671,17 @@ body {
     height: 24px;
 }
 
+/* Specific export option icon backgrounds */
 .pdf-icon {
-    background: linear-gradient(135deg, #e74c3c, #c0392b);
+    background: linear-gradient(135deg, #e74c3c, #c0392b); /* Red gradient */
 }
 
 .excel-icon {
-    background: linear-gradient(135deg, #27ae60, #2ecc71);
+    background: linear-gradient(135deg, #27ae60, #2ecc71); /* Green gradient */
 }
 
 .csv-icon {
-    background: linear-gradient(135deg, #3498db, #2980b9);
+    background: linear-gradient(135deg, #3498db, #2980b9); /* Blue gradient */
 }
 
 .option-content h4 {
@@ -675,6 +697,7 @@ body {
     font-size: 13px;
 }
 
+/* Modal fade-in animation */
 .modal.show .modal-content {
     animation: fadeIn var(--transition-speed) ease;
 }
@@ -691,104 +714,109 @@ body {
         padding-left: 20px;
         padding-right: 20px;
     }
-    
+
     .filter-row {
-        grid-template-columns: 1fr;
+        grid-template-columns: 1fr; /* Stack filter groups vertically */
         gap: 15px;
     }
-    
+
     .date-row {
-        grid-template-columns: 1fr;
+        grid-template-columns: 1fr; /* Stack custom date fields vertically */
         gap: 10px;
     }
-    
+
     .summary-section {
-        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); /* Adjust min-width for cards */
         gap: 15px;
     }
-    
+
     .chart-header {
-        flex-direction: column;
+        flex-direction: column; /* Stack chart header elements */
         align-items: flex-start;
         gap: 10px;
     }
-    
+
     .table-header {
-        flex-direction: column;
+        flex-direction: column; /* Stack table header elements */
         align-items: flex-start;
         gap: 10px;
     }
-    
+
     .table-controls {
-        width: 100%;
+        width: 100%; /* Make controls take full width */
         justify-content: space-between;
     }
-    
+
     .search-input {
         min-width: 150px;
-        flex-grow: 1;
+        flex-grow: 1; /* Allow search input to grow */
     }
-    
+
     .table-footer {
-        flex-direction: column;
+        flex-direction: column; /* Stack footer elements */
         align-items: flex-start;
         gap: 10px;
     }
-    
+
     .pagination-controls {
         width: 100%;
-        justify-content: center;
+        justify-content: center; /* Center pagination buttons */
     }
 }
 
 @media (max-width: 768px) {
+    body {
+        padding-top: 20px;
+        padding-bottom: 20px;
+    }
     .reports-container {
         padding: 15px;
         padding-left: 15px;
         padding-right: 15px;
+        margin: 10px auto; /* Reduce margin */
     }
-    
+
     .filter-actions {
-        justify-content: stretch;
+        justify-content: stretch; /* Stretch buttons to full width */
         flex-direction: column;
     }
-    
+
     .action-btn {
-        width: 100%;
+        width: 100%; /* Full width buttons */
     }
-    
+
     .summary-section {
-        grid-template-columns: 1fr;
+        grid-template-columns: 1fr; /* Single column for summary cards */
     }
-    
+
     .summary-card {
-        flex-direction: column;
+        flex-direction: column; /* Stack icon and content vertically */
         text-align: center;
         gap: 10px;
     }
-    
+
     .chart-controls {
         width: 100%;
         justify-content: center;
     }
-    
+
     .reports-table {
         font-size: 12px;
     }
-    
+
     .reports-table th,
     .reports-table td {
-        padding: 8px 6px;
+        padding: 8px 6px; /* Reduce padding for smaller screens */
         font-size: 12px;
     }
-    
+
     .modal-content {
         width: 95%;
         padding: 20px;
     }
-    
+
     .export-option {
-        flex-direction: column;
+        flex-direction: column; /* Stack export option icon and content vertically */
         text-align: center;
         gap: 10px;
     }
@@ -799,20 +827,20 @@ body {
         font-size: 18px;
         padding: 10px 15px;
     }
-    
+
     .card-content h3 {
         font-size: 20px;
     }
-    
+
     .chart-content {
-        height: 250px;
+        height: 250px; /* Adjust chart height for smaller screens */
     }
-    
+
     .pagination-numbers {
-        flex-wrap: wrap;
+        flex-wrap: wrap; /* Allow page numbers to wrap */
         gap: 2px;
     }
-    
+
     .page-number,
     .pagination-btn {
         padding: 6px 8px;

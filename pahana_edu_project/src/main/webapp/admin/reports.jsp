@@ -1,7 +1,9 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 
-<link rel="stylesheet" href="../css/reports.css">
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+ <link rel="stylesheet" href="../css/reports.css">
+    <!-- Poppins font from Google Fonts -->
+ <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 
 <div class="reports-container">
     <div class="reports-header">
@@ -146,7 +148,7 @@
                 </select>
             </div>
         </div>
-        
+
         <div class="reports-table">
             <table id="reportsTable">
                 <thead id="tableHead">
@@ -170,7 +172,7 @@
                 </tbody>
             </table>
         </div>
-        
+
         <div class="table-footer">
             <div class="pagination-info">
                 <span id="paginationInfo">Showing 0 to 0 of 0 entries</span>
@@ -240,10 +242,20 @@
     </div>
 </div>
 
-<script src="../js/reports.js"></script>
+
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    // Initialize reports functionality
-    initReportsManagement();
+document.addEventListener("DOMContentLoaded", function () {
+    if (typeof initReportsManagement === "function") {
+    	initReportsManagement();
+    } else {
+        const script = document.createElement('script');
+        script.src = '../js/reports.js';
+        script.onload = () => {
+            if (typeof initReportsManagement === "function") {
+            	initReportsManagement();
+            }
+        };
+        document.body.appendChild(script);
+    }
 });
 </script>
