@@ -1,3 +1,5 @@
+"use strict";
+
 // Reports Management System
 let reportsData = [];
 let currentPage = 1;
@@ -10,51 +12,34 @@ let salesChart = null;
 function initReportsManagement() {
     console.log('Initializing Reports Management System...');
     
-    // Initialize event listeners
+    // Initialize event listeners for user interactions
     initEventListeners();
     
-    // Load default data
-    loadSampleData();
-    
-    // Initialize chart
+    // Set a default date range for the initial report
+    setDefaultDateRange();
+
+    // Initialize the chart, but it will be empty until the first report is generated
     initSalesChart();
     
-    // Set default date range
-    setDefaultDateRange();
+    // Automatically generate the initial report on page load
+    generateReport();
     
     console.log('Reports Management System initialized successfully!');
 }
 
 // Initialize Event Listeners
 function initEventListeners() {
-    // Report type change
     document.getElementById('reportType').addEventListener('change', handleReportTypeChange);
-    
-    // Date range change
     document.getElementById('dateRange').addEventListener('change', handleDateRangeChange);
-    
-    // Generate report button
     document.getElementById('generateReportBtn').addEventListener('click', generateReport);
-    
-    // Export report button
     document.getElementById('exportReportBtn').addEventListener('click', () => showModal('exportModal'));
-    
-    // Search functionality
     document.getElementById('searchInput').addEventListener('input', handleSearch);
-    
-    // Entries per page change
     document.getElementById('entriesPerPage').addEventListener('change', handleEntriesPerPageChange);
-    
-    // Pagination
     document.getElementById('prevBtn').addEventListener('click', () => changePage(currentPage - 1));
     document.getElementById('nextBtn').addEventListener('click', () => changePage(currentPage + 1));
-    
-    // Chart period buttons
     document.querySelectorAll('.chart-btn').forEach(btn => {
         btn.addEventListener('click', handleChartPeriodChange);
     });
-    
-    // Export options
     document.querySelectorAll('.export-option').forEach(option => {
         option.addEventListener('click', handleExportOption);
     });
@@ -64,11 +49,7 @@ function initEventListeners() {
 function handleReportTypeChange() {
     currentReportType = document.getElementById('reportType').value;
     updateTableHeaders();
-    
-    // Auto-generate report if data exists
-    if (reportsData.length > 0) {
-        generateReport();
-    }
+    generateReport();
 }
 
 // Handle Date Range Change
@@ -84,17 +65,17 @@ function handleDateRangeChange() {
     }
 }
 
-// Set Default Date Range
+// Set Default Date Range (Last 30 days)
 function setDefaultDateRange() {
     const today = new Date();
     const fromDate = new Date(today);
-    fromDate.setDate(today.getDate() - 30); // Last 30 days
+    fromDate.setDate(today.getDate() - 30);
     
     document.getElementById('fromDate').value = fromDate.toISOString().split('T')[0];
     document.getElementById('toDate').value = today.toISOString().split('T')[0];
 }
 
-// Set Date Range Values
+// Set Date Range Values based on pre-defined options
 function setDateRangeValues(range) {
     const today = new Date();
     const fromDate = new Date();
@@ -121,76 +102,103 @@ function setDateRangeValues(range) {
     document.getElementById('toDate').value = today.toISOString().split('T')[0];
 }
 
-// Generate Report
-async function generateReport() {
+/**
+ * Asynchronously generates a report using a POST request.
+ * The function shows a loading modal, sends a POST request with date parameters,
+ * and handles the success, failure, and completion of the request.
+ */
+function generateReport() {
     showModal('loadingModal');
-    
-    // Simulate API call delay
-    await new Promise(resolve => setTimeout(resolve, 1500));
-    
-    try {
-        // Filter data based on current settings
-        filterDataByDateRange();
-        filterDataByReportType();
+
+    const fromDate = $('#fromDate').val();
+    const toDate = $('#toDate').val();
+
+    // The context path for the servlet is defined here.
+    // Replace with your actual context path or define it globally in your HTML.
+    const contextPath = window.contextPath || '';
+
+    $.post(
+        `${contextPath}/ReportServlet`,
+        { action: currentReportType, fromDate: fromDate, toDate: toDate }
+    )
+    .done(function(reportsData) {
+        if (typeof reportsData === 'string') {
+            try {
+                reportsData = JSON.parse(reportsData);
+            } catch (e) {
+                showNotification(`Error: Expected JSON, received unexpected text.`, 'error');
+                console.error('Error parsing JSON:', e);
+                return;
+            }
+        }
         
-        // Update summary cards
+        filteredData = [...reportsData];
+        
         updateSummaryCards();
-        
-        // Update chart
         updateChart();
-        
-        // Update table
         updateReportsTable();
         
-        // Close loading modal
-        closeModal('loadingModal');
-        
         showNotification('Report generated successfully!', 'success');
-        
-    } catch (error) {
-        console.error('Error generating report:', error);
-        closeModal('loadingModal');
-        showNotification('Error generating report. Please try again.', 'error');
-    }
-}
+    })
+    .fail(function(jqXHR, textStatus, errorThrown) {
+        let errorMessage = 'An unknown error occurred.';
+        if (jqXHR.responseJSON && jqXHR.responseJSON.error) {
+            errorMessage = jqXHR.responseJSON.error;
+        } else if (errorThrown) {
+            errorMessage = errorThrown;
+        }
 
-// Filter Data by Date Range
-function filterDataByDateRange() {
-    const fromDate = new Date(document.getElementById('fromDate').value);
-    const toDate = new Date(document.getElementById('toDate').value);
-    
-    filteredData = reportsData.filter(item => {
-        const itemDate = new Date(item.date);
-        return itemDate >= fromDate && itemDate <= toDate;
+        console.error('Error generating report:', textStatus, errorThrown, jqXHR.responseText);
+        showNotification(`Error generating report: ${errorMessage}`, 'error');
+    })
+    .always(function() {
+        closeModal('loadingModal');
     });
 }
 
-// Filter Data by Report Type
-function filterDataByReportType() {
-    // This would typically filter based on the report type
-    // For now, we'll use the same data for all report types
-    // In a real application, you'd have different data structures for different reports
-}
-
-// Update Summary Cards
+// Updates the summary cards with data from the filtered report data
 function updateSummaryCards() {
-    // Calculate totals from filtered data
-    const totalSales = filteredData.reduce((sum, item) => sum + parseFloat(item.amount), 0);
-    const totalOrders = filteredData.length;
-    const uniqueCustomers = new Set(filteredData.map(item => item.customer)).size;
-    const totalProfit = totalSales * 0.2; // Assuming 20% profit margin
+    let totalSales = 0;
+    let totalOrders = 0;
+    let uniqueCustomers = 0;
+    let totalProfit = 0;
     
-    // Update DOM
+    switch (currentReportType) {
+        case 'sales':
+            totalSales = filteredData.reduce((sum, item) => sum + item.total, 0);
+            totalOrders = filteredData.length;
+            uniqueCustomers = new Set(filteredData.map(item => item.customerId)).size;
+            totalProfit = totalSales * 0.2;
+            break;
+        case 'products':
+            totalSales = filteredData.reduce((sum, item) => sum + (item.sold_qty || 0) * item.price, 0);
+            totalOrders = filteredData.reduce((sum, item) => sum + (item.sold_qty || 0), 0);
+            uniqueCustomers = filteredData.length; // Number of unique products
+            totalProfit = totalSales * 0.2;
+            break;
+        case 'customers':
+            totalSales = filteredData.reduce((sum, item) => sum + (item.total_spent || 0), 0);
+            totalOrders = filteredData.reduce((sum, item) => sum + (item.total_orders || 0), 0);
+            uniqueCustomers = filteredData.length;
+            totalProfit = totalSales * 0.2;
+            break;
+        case 'inventory':
+            totalSales = filteredData.reduce((sum, item) => sum + item.stock * item.price, 0);
+            totalOrders = filteredData.reduce((sum, item) => sum + (item.sold_qty || 0), 0);
+            uniqueCustomers = filteredData.length;
+            totalProfit = totalSales * 0.2;
+            break;
+    }
+    
     document.getElementById('totalSales').textContent = `Rs: ${totalSales.toFixed(2)}`;
     document.getElementById('totalOrders').textContent = totalOrders;
     document.getElementById('totalCustomers').textContent = uniqueCustomers;
     document.getElementById('totalProfit').textContent = `Rs: ${totalProfit.toFixed(2)}`;
     
-    // Update trends (simulated)
     updateTrendIndicators();
 }
 
-// Update Trend Indicators
+// Updates trend indicators with simulated data
 function updateTrendIndicators() {
     const trends = [
         { id: 'salesTrend', value: Math.random() * 20 - 10 },
@@ -207,9 +215,8 @@ function updateTrendIndicators() {
     });
 }
 
-// Update Chart
+// Updates the chart with new data
 function updateChart() {
-    // Generate chart data from filtered data
     const chartData = generateChartData();
     
     if (salesChart) {
@@ -220,7 +227,7 @@ function updateChart() {
     }
 }
 
-// Initialize Sales Chart
+// Initializes the Chart.js chart instance
 function initSalesChart(data = null) {
     if (typeof Chart === 'undefined') {
         console.error('Chart.js is not loaded. Please include the Chart.js library.');
@@ -243,76 +250,174 @@ function initSalesChart(data = null) {
             responsive: true,
             maintainAspectRatio: false,
             plugins: {
-                legend: {
-                    display: true,
-                    position: 'top'
-                }
+                legend: { display: true, position: 'top' }
             },
             scales: {
                 y: {
                     beginAtZero: true,
                     ticks: {
-                        callback: function(value) {
-                            return 'Rs: ' + value;
-                        }
+                        callback: value => 'Rs: ' + value
                     }
                 }
             },
             elements: {
-                line: {
-                    tension: 0.4
-                },
-                point: {
-                    radius: 5,
-                    hoverRadius: 8
-                }
+                line: { tension: 0.4 },
+                point: { radius: 5, hoverRadius: 8 }
             }
         }
     });
 }
 
+/**
+ * Dynamically generates chart data from the `filteredData` array.
+ * This function handles different aggregation logic for each report type.
+ */
 // Generate Chart Data
 function generateChartData() {
-    // Generate sample chart data based on current period
-    const period = document.querySelector('.chart-btn.active').dataset.period;
+    // Determine the active period button, defaulting to 'daily'
+    const period = document.querySelector('.chart-btn.active')?.dataset.period || 'daily';
     let labels = [];
     let salesData = [];
     let ordersData = [];
     
-    switch (period) {
-        case 'daily':
-            labels = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-            salesData = [12000, 15000, 18000, 14000, 22000, 28000, 25000];
-            ordersData = [45, 52, 68, 51, 78, 89, 82];
-            break;
-        case 'weekly':
-            labels = ['Week 1', 'Week 2', 'Week 3', 'Week 4'];
-            salesData = [85000, 92000, 78000, 105000];
-            ordersData = [320, 345, 298, 412];
-            break;
-        case 'monthly':
-            labels = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'];
-            salesData = [320000, 385000, 295000, 445000, 520000, 478000];
-            ordersData = [1250, 1480, 1120, 1680, 1950, 1820];
-            break;
+    // Object to hold aggregated data, grouped by date or product name
+    const groupedData = {};
+    
+    // Iterate over the filtered data to aggregate values
+    filteredData.forEach(item => {
+        let key; // Key for grouping (e.g., date string, product name)
+        let valueForSales = 0; // Value to add to sales/revenue
+        let valueForOrders = 0; // Value to add to orders/quantity
+
+        // Determine the key and values based on the current report type
+        switch (currentReportType) {
+            case 'sales':
+                // For sales reports, group by date
+                if (!item.date) return; // Skip items without a date
+                valueForSales = item.total || 0;
+                valueForOrders = 1; // Each sales item is one order/transaction
+
+                const salesDate = new Date(item.date);
+                if (isNaN(salesDate.getTime())) return; // Skip invalid dates
+
+                switch (period) {
+                    case 'daily':
+                        key = formatDate(salesDate); // e.g., "01/08/2025"
+                        break;
+                    case 'weekly':
+                        // Calculate the start of the week (Monday)
+                        const day = salesDate.getDay(); // 0 for Sunday, 1 for Monday, etc.
+                        const diff = salesDate.getDate() - day + (day === 0 ? -6 : 1); // Adjust for Sunday being 0
+                        const weekStart = new Date(salesDate.setDate(diff));
+                        key = `Week starting ${formatDate(weekStart)}`;
+                        break;
+                    case 'monthly':
+                        key = salesDate.toLocaleString('default', { month: 'long', year: 'numeric' }); // e.g., "August 2025"
+                        break;
+                }
+                break;
+
+            case 'products':
+            case 'inventory':
+                // For product/inventory reports, group by product name
+                key = item.bookName || `Product ID: ${item.bookId}`;
+                valueForSales = (item.sold_qty || 0) * (item.price || 0); // Revenue
+                valueForOrders = item.sold_qty || 0; // Quantity sold
+                break;
+
+            case 'customers':
+                // For customer reports, group by date (last order date)
+                if (!item.date) return; // Use last order date
+                valueForSales = item.total_spent || 0;
+                valueForOrders = item.total_orders || 0;
+
+                const customerDate = new Date(item.date);
+                if (isNaN(customerDate.getTime())) return;
+
+                switch (period) {
+                    case 'daily':
+                        key = formatDate(customerDate);
+                        break;
+                    case 'weekly':
+                        const day = customerDate.getDay();
+                        const diff = customerDate.getDate() - day + (day === 0 ? -6 : 1);
+                        const weekStart = new Date(customerDate.setDate(diff));
+                        key = `Week starting ${formatDate(weekStart)}`;
+                        break;
+                    case 'monthly':
+                        key = customerDate.toLocaleString('default', { month: 'long', year: 'numeric' });
+                        break;
+                }
+                break;
+            default:
+                // Fallback or error handling for unknown report types
+                return;
+        }
+
+        // Initialize group if it doesn't exist
+        if (!groupedData[key]) {
+            groupedData[key] = { sales: 0, orders: 0 };
+        }
+        // Aggregate values
+        groupedData[key].sales += valueForSales;
+        groupedData[key].orders += valueForOrders;
+    });
+
+    // Sort labels for chronological order if they are dates
+    if (currentReportType === 'sales' || currentReportType === 'customers') {
+        labels = Object.keys(groupedData).sort((a, b) => {
+            if (period === 'daily') {
+                // Parse DD/MM/YYYY to create comparable dates
+                const [dayA, monthA, yearA] = a.split('/').map(Number);
+                const [dayB, monthB, yearB] = b.split('/').map(Number);
+                const dateA = new Date(yearA, monthA - 1, dayA);
+                const dateB = new Date(yearB, monthB - 1, dayB);
+                return dateA.getTime() - dateB.getTime();
+            } else if (period === 'weekly') {
+                // Extract date from "Week starting DD/MM/YYYY"
+                const datePartA = a.substring(a.indexOf('starting ') + 9);
+                const datePartB = b.substring(b.indexOf('starting ') + 9);
+                const [dayA, monthA, yearA] = datePartA.split('/').map(Number);
+                const [dayB, monthB, yearB] = datePartB.split('/').map(Number);
+                const dateA = new Date(yearA, monthA - 1, dayA);
+                const dateB = new Date(yearB, monthB - 1, dayB);
+                return dateA.getTime() - dateB.getTime();
+            } else if (period === 'monthly') {
+                // Parse "Month Year" (e.g., "August 2025")
+                const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+                const [monthAStr, yearAStr] = a.split(' ');
+                const [monthBStr, yearBStr] = b.split(' ');
+                const dateA = new Date(parseInt(yearAStr), monthNames.indexOf(monthAStr), 1);
+                const dateB = new Date(parseInt(yearBStr), monthNames.indexOf(monthBStr), 1);
+                return dateA.getTime() - dateB.getTime();
+            }
+            return 0; // Should not happen for these report types
+        });
+    } else {
+        // For product/inventory, just use the keys as labels
+        labels = Object.keys(groupedData);
     }
+
+    // Populate salesData and ordersData based on the sorted labels
+    salesData = labels.map(key => groupedData[key].sales);
+    ordersData = labels.map(key => groupedData[key].orders);
     
     return {
         labels: labels,
         datasets: [
             {
-                label: 'Sales (Rs)',
+                label: (currentReportType === 'products' || currentReportType === 'inventory') ? 'Revenue (Rs)' : 'Sales (Rs)',
                 data: salesData,
                 borderColor: 'rgb(39, 174, 96)',
                 backgroundColor: 'rgba(39, 174, 96, 0.1)',
                 fill: true
             },
             {
-                label: 'Orders',
+                label: (currentReportType === 'products' || currentReportType === 'inventory') ? 'Quantity Sold' : 'Orders',
                 data: ordersData,
                 borderColor: 'rgb(52, 152, 219)',
                 backgroundColor: 'rgba(52, 152, 219, 0.1)',
-                yAxisID: 'y1'
+                yAxisID: 'y1' // Use a secondary Y-axis if needed (defined in Chart.js options)
             }
         ]
     };
@@ -320,11 +425,8 @@ function generateChartData() {
 
 // Handle Chart Period Change
 function handleChartPeriodChange(e) {
-    // Update active button
     document.querySelectorAll('.chart-btn').forEach(btn => btn.classList.remove('active'));
     e.target.classList.add('active');
-    
-    // Update chart
     updateChart();
 }
 
@@ -351,11 +453,7 @@ function updateTableHeaders() {
             break;
         case 'inventory':
             title = 'Inventory Report';
-            headers = ['Product ID', 'Product Name', 'Current Stock', 'Min Stock', 'Max Stock', 'Reorder Level', 'Status'];
-            break;
-        case 'payment':
-            title = 'Payment Report';
-            headers = ['Date', 'Invoice ID', 'Customer', 'Amount', 'Method', 'Status', 'Reference'];
+            headers = ['Product ID', 'Product Name', 'Current Stock', 'Status'];
             break;
     }
     
@@ -367,26 +465,23 @@ function updateTableHeaders() {
 function updateReportsTable() {
     const tableBody = document.getElementById('tableBody');
     
-    // Apply search filter
     let displayData = filteredData;
     const searchTerm = document.getElementById('searchInput').value.toLowerCase();
     
     if (searchTerm) {
         displayData = displayData.filter(item => 
             Object.values(item).some(value => 
-                value.toString().toLowerCase().includes(searchTerm)
+                value && value.toString().toLowerCase().includes(searchTerm)
             )
         );
     }
     
-    // Calculate pagination
     const totalEntries = displayData.length;
     const totalPages = Math.ceil(totalEntries / entriesPerPage);
     const startIndex = (currentPage - 1) * entriesPerPage;
     const endIndex = Math.min(startIndex + entriesPerPage, totalEntries);
     const pageData = displayData.slice(startIndex, endIndex);
     
-    // Clear existing rows
     tableBody.innerHTML = '';
     
     if (pageData.length === 0) {
@@ -404,11 +499,10 @@ function updateReportsTable() {
         });
     }
     
-    // Update pagination
     updatePagination(totalEntries, startIndex + 1, endIndex, totalPages);
 }
 
-// Create Table Row
+// Create Table Row for the current report type
 function createTableRow(item) {
     const row = document.createElement('tr');
     
@@ -417,46 +511,43 @@ function createTableRow(item) {
             row.innerHTML = `
                 <td>${formatDate(item.date)}</td>
                 <td>${item.invoiceId}</td>
-                <td>${item.customer}</td>
-                <td>${item.items}</td>
-                <td>Rs: ${parseFloat(item.amount).toFixed(2)}</td>
-                <td>${item.paymentMethod}</td>
-                <td><span class="status-badge status-${item.status.toLowerCase()}">${item.status}</span></td>
+                <td>${item.fullName || 'N/A'}</td>
+                <td>${item.items || 'N/A'}</td>
+                <td>Rs: ${item.total.toFixed(2)}</td>
+                <td>${item.method}</td>
+                <td><span class="status-badge status-${(item.status || 'completed').toLowerCase()}">${item.status || 'Completed'}</span></td>
             `;
             break;
         case 'products':
             row.innerHTML = `
-                <td>${item.productId || 'P' + Math.floor(Math.random() * 1000)}</td>
-                <td>${item.product || 'Sample Product'}</td>
-                <td>${item.category || 'Electronics'}</td>
-                <td>${Math.floor(Math.random() * 100)}</td>
-                <td>Rs: ${parseFloat(item.amount).toFixed(2)}</td>
-                <td>Rs: ${(parseFloat(item.amount) * 0.2).toFixed(2)}</td>
-                <td>${Math.floor(Math.random() * 50)}</td>
+                <td>${item.bookId}</td>
+                <td>${item.bookName}</td>
+                <td>${item.categoryId}</td>
+                <td>${item.sold_qty || 0}</td>
+                <td>Rs: ${((item.sold_qty || 0) * item.price).toFixed(2)}</td>
+                <td>Rs: ${((item.sold_qty || 0) * item.price * 0.2).toFixed(2)}</td>
+                <td>${item.stock}</td>
             `;
             break;
         case 'customers':
             row.innerHTML = `
-                <td>${item.customerId || 'C' + Math.floor(Math.random() * 1000)}</td>
-                <td>${item.customer}</td>
-                <td>${item.email || item.customer.toLowerCase().replace(' ', '.') + '@email.com'}</td>
-                <td>${Math.floor(Math.random() * 20) + 1}</td>
-                <td>Rs: ${parseFloat(item.amount).toFixed(2)}</td>
+                <td>${item.userId}</td>
+                <td>${item.fullName}</td>
+                <td>${item.email}</td>
+                <td>${item.total_orders || 0}</td>
+                <td>Rs: ${(item.total_spent || 0).toFixed(2)}</td>
                 <td>${formatDate(item.date)}</td>
-                <td><span class="status-badge status-${item.status.toLowerCase()}">${item.status}</span></td>
+                <td><span class="status-badge status-${(item.status || 'active').toLowerCase()}">${item.status || 'Active'}</span></td>
             `;
             break;
-        default:
-            // Default sales format
+        case 'inventory':
             row.innerHTML = `
-                <td>${formatDate(item.date)}</td>
-                <td>${item.invoiceId}</td>
-                <td>${item.customer}</td>
-                <td>${item.items}</td>
-                <td>Rs: ${parseFloat(item.amount).toFixed(2)}</td>
-                <td>${item.paymentMethod}</td>
-                <td><span class="status-badge status-${item.status.toLowerCase()}">${item.status}</span></td>
+                <td>${item.bookId}</td>
+                <td>${item.bookName}</td>
+                <td>${item.stock}</td>
+                <td><span class="status-badge status-${item.stock > 10 ? 'active' : 'low'}">${item.stock > 10 ? 'Active' : 'Low'}</span></td>
             `;
+            break;
     }
     
     return row;
@@ -464,14 +555,14 @@ function createTableRow(item) {
 
 // Handle Search
 function handleSearch() {
-    currentPage = 1; // Reset to first page
+    currentPage = 1;
     updateReportsTable();
 }
 
 // Handle Entries Per Page Change
 function handleEntriesPerPageChange() {
     entriesPerPage = parseInt(document.getElementById('entriesPerPage').value);
-    currentPage = 1; // Reset to first page
+    currentPage = 1;
     updateReportsTable();
 }
 
@@ -487,15 +578,12 @@ function changePage(page) {
 
 // Update Pagination
 function updatePagination(totalEntries, startIndex, endIndex, totalPages) {
-    // Update pagination info
     document.getElementById('paginationInfo').textContent = 
         `Showing ${startIndex} to ${endIndex} of ${totalEntries} entries`;
     
-    // Update pagination buttons
     document.getElementById('prevBtn').disabled = currentPage <= 1;
     document.getElementById('nextBtn').disabled = currentPage >= totalPages;
     
-    // Generate page numbers
     const paginationNumbers = document.getElementById('paginationNumbers');
     paginationNumbers.innerHTML = '';
     
@@ -523,7 +611,6 @@ function handleExportOption(e) {
     closeModal('exportModal');
     showModal('loadingModal');
     
-    // Simulate export process
     setTimeout(() => {
         closeModal('loadingModal');
         
@@ -545,30 +632,79 @@ function handleExportOption(e) {
 
 // Export Functions
 function exportToPDF() {
-    // In a real application, you would use a library like jsPDF
-    console.log('Exporting to PDF...');
+	const fromDate = $('#fromDate').val();
+	const toDate = $('#toDate').val();
+	const contextPath = window.contextPath || '';
+	const url = `${contextPath}/ReportServlet?action=exportPdf&reportType=${currentReportType}&fromDate=${fromDate}&toDate=${toDate}`;
+	window.location.href = url; // Redirects browser to download the file
 }
 
 function exportToExcel() {
-    // In a real application, you would use a library like SheetJS
-    console.log('Exporting to Excel...');
+	const fromDate = $('#fromDate').val();
+	    const toDate = $('#toDate').val();
+	    const contextPath = window.contextPath || '';
+	    const url = `${contextPath}/ReportServlet?action=exportExcel&reportType=${currentReportType}&fromDate=${fromDate}&toDate=${toDate}`;
+	    window.location.href = url; // Redirects browser to download the file
 }
 
+// Exports filtered data to a CSV file
 function exportToCSV() {
-    const headers = ['Date', 'Invoice ID', 'Customer', 'Items', 'Amount', 'Payment Method', 'Status'];
-    let csvContent = headers.join(',') + '\n';
+    let headers, dataMapper;
     
+    switch (currentReportType) {
+        case 'sales':
+            headers = ['Date', 'Invoice ID', 'Customer', 'Items', 'Amount', 'Payment Method', 'Status'];
+            dataMapper = item => [
+                formatDate(item.date),
+                item.invoiceId,
+                `"${item.fullName || 'N/A'}"`,
+                item.items || 'N/A',
+                item.total,
+                item.method,
+                item.status || 'Completed'
+            ];
+            break;
+        case 'products':
+            headers = ['Product ID', 'Product Name', 'Category', 'Sold Qty', 'Revenue', 'Profit', 'Stock'];
+            dataMapper = item => [
+                item.bookId,
+                `"${item.bookName}"`,
+                item.categoryId,
+                item.sold_qty || 0,
+                ((item.sold_qty || 0) * item.price).toFixed(2),
+                ((item.sold_qty || 0) * item.price * 0.2).toFixed(2),
+                item.stock
+            ];
+            break;
+        case 'customers':
+            headers = ['Customer ID', 'Name', 'Email', 'Total Orders', 'Total Spent', 'Last Order', 'Status'];
+            dataMapper = item => [
+                item.userId,
+                `"${item.fullName}"`,
+                item.email,
+                item.total_orders || 0,
+                (item.total_spent || 0).toFixed(2),
+                formatDate(item.date),
+                item.status || 'Active'
+            ];
+            break;
+        case 'inventory':
+            headers = ['Product ID', 'Product Name', 'Current Stock', 'Min Stock', 'Max Stock', 'Reorder Level', 'Status'];
+            dataMapper = item => [
+                item.bookId,
+                `"${item.bookName}"`,
+                item.stock,
+                Math.floor(item.stock * 0.2),
+                Math.floor(item.stock * 2),
+                Math.floor(item.stock * 0.3),
+                item.stock > 10 ? 'Active' : 'Low'
+            ];
+            break;
+    }
+    
+    let csvContent = headers.join(',') + '\n';
     filteredData.forEach(item => {
-        const row = [
-            formatDate(item.date),
-            item.invoiceId,
-            `"${item.customer}"`,
-            item.items,
-            item.amount,
-            item.paymentMethod,
-            item.status
-        ];
-        csvContent += row.join(',') + '\n';
+        csvContent += dataMapper(item).join(',') + '\n';
     });
     
     const blob = new Blob([csvContent], { type: 'text/csv' });
@@ -582,42 +718,13 @@ function exportToCSV() {
     window.URL.revokeObjectURL(url);
 }
 
-// Load Sample Data
-function loadSampleData() {
-    // Generate sample data for demonstration
-    const customers = ['John Doe', 'Jane Smith', 'Mike Johnson', 'Sarah Wilson', 'David Brown', 'Lisa Davis', 'Tom Anderson', 'Emily Clark'];
-    const paymentMethods = ['Cash', 'Card', 'Bank Transfer'];
-    const statuses = ['Completed', 'Pending', 'Cancelled'];
-    
-    reportsData = [];
-    
-    for (let i = 0; i < 150; i++) {
-        const date = new Date();
-        date.setDate(date.getDate() - Math.floor(Math.random() * 90)); // Last 90 days
-        
-        reportsData.push({
-            id: i + 1,
-            date: date,
-            invoiceId: `INV-${String(i + 1).padStart(4, '0')}`,
-            customer: customers[Math.floor(Math.random() * customers.length)],
-            items: Math.floor(Math.random() * 10) + 1,
-            amount: (Math.random() * 10000 + 500).toFixed(2),
-            paymentMethod: paymentMethods[Math.floor(Math.random() * paymentMethods.length)],
-            status: statuses[Math.floor(Math.random() * statuses.length)]
-        });
-    }
-    
-    // Set initial filtered data
-    filteredData = [...reportsData];
-    
-    console.log('Sample data loaded:', reportsData.length, 'records');
-}
-
 // Utility Functions
 function formatDate(date) {
+    if (!date) return 'N/A';
     if (typeof date === 'string') {
         date = new Date(date);
     }
+    if (isNaN(date.getTime())) return 'N/A';
     return date.toLocaleDateString('en-GB');
 }
 
@@ -636,7 +743,6 @@ function closeModal(modalId) {
 }
 
 function showNotification(message, type = 'info') {
-    // Create notification element
     const notification = document.createElement('div');
     notification.className = `notification notification-${type}`;
     notification.innerHTML = `
@@ -644,7 +750,6 @@ function showNotification(message, type = 'info') {
         <button onclick="this.parentElement.remove()">×</button>
     `;
     
-    // Add styles if not already added
     if (!document.querySelector('#notification-styles')) {
         const styles = document.createElement('style');
         styles.id = 'notification-styles';
@@ -681,25 +786,18 @@ function showNotification(message, type = 'info') {
                 justify-content: center;
             }
             @keyframes slideInRight {
-                from { transform: translateX(100%); opacity:				0; }
-				to { transform: translateX(0); opacity: 1; }
-				}
-				`;
-				document.head.appendChild(styles);
-				}
+                from { transform: translateX(100%); opacity: 0; }
+                to { transform: translateX(0); opacity: 1; }
+            }
+        `;
+        document.head.appendChild(styles);
+    }
+    
+    document.body.appendChild(notification);
+    setTimeout(() => notification.remove(), 3000);
+}
 
-				// Append notification to body
-				document.body.appendChild(notification);
-
-				// Auto-remove after 3 seconds
-				setTimeout(() => {
-				notification.remove();
-				}, 3000);
-				}
-
-				// Initialize on page load
-				document.addEventListener('DOMContentLoaded', function() {
-				// Initialize reports functionality
-				initReportsManagement();
-				});
-				
+// Initialize on page load
+document.addEventListener('DOMContentLoaded', function() {
+    initReportsManagement();
+});

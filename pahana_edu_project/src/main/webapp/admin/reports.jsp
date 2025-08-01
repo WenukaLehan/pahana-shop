@@ -20,7 +20,6 @@
                     <option value="products">Product Report</option>
                     <option value="customers">Customer Report</option>
                     <option value="inventory">Inventory Report</option>
-                    <option value="payment">Payment Report</option>
                 </select>
             </div>
             <div class="filter-group">
