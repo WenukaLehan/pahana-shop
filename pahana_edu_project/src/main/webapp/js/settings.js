@@ -4,9 +4,11 @@ function initSettingsManagement() {
         fullName: document.getElementById('fullName'),
         email: document.getElementById('email'),
         phone: document.getElementById('phone'),
-        address: document.getElementById('address'),
+        username: document.getElementById('username'),
         saveBtn: document.getElementById('saveProfileBtn'),
-        cancelBtn: document.getElementById('cancelProfileBtn')
+        cancelBtn: document.getElementById('cancelProfileBtn'),
+		profilePicture: document.getElementById('profilePicture'),
+		imagePreview: document.getElementById('profileImagePreview')
     };
 
     // Employee Management
@@ -14,6 +16,9 @@ function initSettingsManagement() {
         name: document.getElementById('employeeName'),
         email: document.getElementById('employeeEmail'),
         role: document.getElementById('employeeRole'),
+		username: document.getElementById('employeeUsername'),
+		profilePicture: document.getElementById('employeeProfilePicture'),
+		imagePreview: document.getElementById('employeeProfileImagePreview'),
         phone: document.getElementById('employeePhone'),
         addBtn: document.getElementById('addEmployeeBtn')
     };
@@ -45,6 +50,80 @@ function initSettingsManagement() {
     function showLoadingModal(show) {
         loadingModal.classList.toggle('show', show);
     }
+	
+	//load setting data 
+	function loadSettingsData() {
+	    try {
+            $.get(window.contextPath + '/SettingServlet', {}, function(data) {
+				//console.log("System settings data:", data);
+                if(data) {
+                    systemSettings.lowStockAlert.checked = data.LowStock || false;
+                    systemSettings.emailNotifications.checked = data.EmailNot || false;
+                    systemSettings.autoBackups.checked = data.AtuBackup || false;
+                } else {
+                    console.error("System settings data not found.");
+                }
+            }).fail(function(xhr, status, error) {
+                console.error("Error fetching system settings:", status, error);
+            });
+        } catch (e) {
+            console.error("Error loading settings data:", e);
+        }
+    }
+	loadSettingsData();
+	
+	// Profile Picture Upload Handler
+	profileForm.profilePicture.addEventListener('change', (event) => {
+		const file = event.target.files[0];
+		if (file) {
+			const reader = new FileReader();
+			reader.onload = function(e) {
+				profileForm.imagePreview.src = e.target.result;
+			    profileForm.imagePreview.style.display = 'block';
+			}
+			reader.readAsDataURL(file);
+		}
+	});
+	// Employee Profile Picture Upload Handler
+	employeeForm.profilePicture.addEventListener('change', (event) => {
+		const file = event.target.files[0];
+		if (file) {
+			const reader = new FileReader();
+			reader.onload = function(e) {
+				employeeForm.imagePreview.src = e.target.result;
+                employeeForm.imagePreview.style.display = 'block';
+			}
+			reader.readAsDataURL(file);
+		}
+	});
+	
+	// Initialize Profile Form with Sample Data
+	function initializeProfileForm() {
+		try{
+			profileForm.imagePreview.src = window.contextPath + '/GetProImage?id=' + window.userId + '&action=user';
+			profileForm.imagePreview.style.display = 'block';
+			
+			$.post(window.contextPath + '/user', {action : 'getUserInfo'}, function(data) {
+			    if(data.success) {
+                    profileForm.fullName.value = data.data.name || '';
+                    profileForm.email.value = data.data.email || '';
+                    profileForm.phone.value = data.data.phone || '';
+                    profileForm.username.value = data.data.username || '';
+                } else {
+                    console.error("User profile data not found.");
+                }
+            }).fail(function(xhr, status, error) {
+				
+				  console.error("Error fetching user profile:", status, error);
+            });
+		
+			
+		}
+		catch(e){
+            console.error("Error initializing profile form:", e);
+        }
+	}
+	initializeProfileForm();	
 
     // Profile Settings Handlers
     profileForm.saveBtn.addEventListener('click', () => {
@@ -54,7 +133,7 @@ function initSettingsManagement() {
                 fullName: profileForm.fullName.value,
                 email: profileForm.email.value,
                 phone: profileForm.phone.value,
-                address: profileForm.address.value
+                username: profileForm.username.value
             };
             console.log('Saving profile:', profileData);
             // Simulate API call
@@ -69,12 +148,12 @@ function initSettingsManagement() {
         profileForm.fullName.value = '';
         profileForm.email.value = '';
         profileForm.phone.value = '';
-        profileForm.address.value = '';
+        profileForm.username.value = '';
     });
 
     // Employee Management Handlers
     employeeForm.addBtn.addEventListener('click', () => {
-        if (!employeeForm.name.value || !employeeForm.email.value || !employeeForm.phone.value) {
+        if (!employeeForm.name.value || !employeeForm.email.value || !employeeForm.phone.value || !employeeForm.role.value || !employeeForm.username.value || !employeeForm.profilePicture.files.length) {
             alert('Please fill all required fields.');
             return;
         }
@@ -82,14 +161,45 @@ function initSettingsManagement() {
         showLoadingModal(true);
         setTimeout(() => {
             const newEmployee = {
-                id: employees.length + 1,
                 name: employeeForm.name.value,
                 email: employeeForm.email.value,
                 role: employeeForm.role.value,
                 phone: employeeForm.phone.value,
-                status: 'active'
+                username: employeeForm.username.value,
+				image : employeeForm.profilePicture.files[0]
             };
-            employees.push(newEmployee);
+			
+			try {
+			    const formData = new FormData();
+			    formData.append("action", "addUser");
+			    formData.append("username", newEmployee.username);
+			    formData.append("email", newEmployee.email);
+			    formData.append("name", newEmployee.name);
+			    formData.append("role", newEmployee.role); // make sure it's a number
+			    formData.append("phone", newEmployee.phone);
+			    formData.append("image", newEmployee.image); // should be a File object
+
+			    fetch(window.contextPath + '/SettingServlet', {
+			        method: 'POST',
+			        body: formData
+			    })
+			    .then(response => response.json())
+			    .then(response => {
+			        if (response.success) {
+			            console.log("New employee added successfully");
+			        } else {
+			            console.error("Failed to add new employee:", response.message);
+			        }
+			    })
+			    .catch(error => {
+			        console.error("Error adding new employee:", error);
+			    });
+			} catch (e) {
+			    console.error("Error creating new employee:", e);
+			}
+
+			
+			fetchEmployee();
             updateEmployeeTable();
             employeeForm.name.value = '';
             employeeForm.email.value = '';
@@ -99,6 +209,27 @@ function initSettingsManagement() {
             alert('Employee added successfully!');
         }, 1000);
     });
+	
+	// Fetch Employees from Server\
+	function fetchEmployee() {
+		try {
+            $.post(window.contextPath + '/SettingServlet', {action: 'getAllUsers'}, function(data) {
+				console.log("Fetched employees data:", data);
+                if (data) {
+                    employees = data.data || [];
+                    updateEmployeeTable();
+                } else {
+                    console.error("Failed to fetch employees:", data.message);
+                }
+            }).fail(function(xhr, status, error) {
+                console.error("Error fetching employees:", status, error);
+            });
+        } catch (e) {
+			console.error("Error fetching employees:", e);
+		}
+	}
+	
+	fetchEmployee();
 
     // Employee Table Functions
     function updateEmployeeTable(searchTerm = '') {
@@ -206,12 +337,29 @@ function initSettingsManagement() {
         showLoadingModal(true);
         setTimeout(() => {
             const settingsData = {
-                lowStockAlert: systemSettings.lowStockAlert.checked,
-                emailNotifications: systemSettings.emailNotifications.checked,
-                autoBackups: systemSettings.autoBackups.checked
+                stockAlerts: systemSettings.lowStockAlert.checked,
+                email: systemSettings.emailNotifications.checked,
+                backup: systemSettings.autoBackups.checked
             };
             console.log('Saving system settings:', settingsData);
             // Simulate API call
+			for (const key in settingsData) {
+				try{
+					
+				    $.post(window.contextPath + '/SettingServlet', {action: 'updateSettings', name: key, value: settingsData[key]}, function(response) {
+                        if (response.success) {
+                            console.log(`Setting ${key} updated successfully.`);
+                        } else {
+                            console.error(`Failed to update setting ${key}:`, response.message);
+                        }
+                    }).fail(function(xhr, status, error) {
+                        console.error(`Error updating setting ${key}:`, status, error);
+                    });
+				}
+				catch(e){
+                    console.error(`Error updating setting ${key}:`, e);
+                }
+			}
             setTimeout(() => {
                 showLoadingModal(false);
                 alert('System settings updated successfully!');

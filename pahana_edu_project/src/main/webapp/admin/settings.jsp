@@ -30,8 +30,18 @@
                     <input type="tel" class="form-input" id="phone" placeholder="Enter phone number">
                 </div>
                 <div class="form-group">
-                    <label>Address</label>
-                    <input type="text" class="form-input" id="address" placeholder="Enter address">
+                    <label>Username</label>
+                    <input type="text" class="form-input" id="username" placeholder="Enter username">
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Profile Image</label>
+                    <input type="file" class="form-input" id="profilePicture" accept="image/png, image/jpeg">
+                </div>
+                <div class="form-group">
+                	<img id="profileImagePreview" alt="Profile Image Preview" style="display:none; max-height: 150px; margin-top: 10px; max-width: 70px;"  class="profile-image-preview">
+                    <span class="image-upload-text">Upload Profile Image</span>
                 </div>
             </div>
             <div class="form-actions">
@@ -72,14 +82,28 @@
                 <div class="form-group">
                     <label>Role</label>
                     <select class="form-select" id="employeeRole">
-                        <option value="admin">Admin</option>
-                        <option value="manager">Manager</option>
-                        <option value="staff">Staff</option>
+                        <option value="2">Cashier</option>
                     </select>
                 </div>
                 <div class="form-group">
                     <label>Phone</label>
                     <input type="tel" class="form-input" id="employeePhone" placeholder="Enter phone number">
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Profile Image</label>
+                    <input type="file" class="form-input" id="employeeProfilePicture" accept="image/png, image/jpeg">
+                </div>
+                <div class="form-group">
+                    <label>Username</label>
+                    <input type="text" class="form-input" id="employeeUsername" placeholder="Enter username">
+                </div>
+            </div>
+            <div class="form-row">
+                 <div class="form-group">
+                	<img id="employeeProfileImagePreview" style="display:none; max-height: 150px;max-width: 70px; margin-top: 10px;"  alt="Profile Image Preview" class="profile-image-preview">
+                    <span class="image-upload-text">Upload Profile Image</span>
                 </div>
             </div>
             <div class="form-actions">

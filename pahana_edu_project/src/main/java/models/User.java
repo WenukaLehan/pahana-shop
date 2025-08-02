@@ -1,5 +1,7 @@
 package models;
 
+import java.io.InputStream;
+
 public class User {
 	
 	private String id;
@@ -8,8 +10,26 @@ public class User {
     private int role;
     private String name;
     private String phone;
+    private InputStream image;
+    private String status;
     
-    public User() {
+    public String getStatus() {
+		return status;
+	}
+
+	public void setStatus(String status) {
+		this.status = status;
+	}
+	
+    public InputStream getImage() {
+		return image;
+	}
+
+	public void setImage(InputStream image) {
+		this.image = image;
+	}
+
+	public User() {
     	
     }
     
@@ -20,6 +40,18 @@ public class User {
     	this.role = role;
     	this.name = name;
     	this.phone = phone;
+    			 							
+    }
+    
+    public User(String id, String username, String email, int role, String name, String phone, InputStream image, String status) {
+    	this.id = id;
+    	this.username = username;
+    	this.email = email;
+    	this.role = role;
+    	this.name = name;
+    	this.phone = phone;
+    	this.image = image;
+    	this.status = status;
     			 							
     }
 	

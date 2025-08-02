@@ -6,13 +6,19 @@ import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpSession;
 import jakarta.servlet.http.Part;
 import models.Book;
+import util.DbCon;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintWriter;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -36,9 +42,39 @@ public class BookServlet extends HttpServlet {
     }
 
 	
-	protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-		
-	}
+    protected void doGet(HttpServletRequest request, HttpServletResponse response) throws IOException {
+        HttpSession session = request.getSession(false);
+
+        response.setContentType("application/json");
+        response.setCharacterEncoding("UTF-8");
+
+        if (session == null || session.getAttribute("stockAlerts") == null || !(Boolean) session.getAttribute("stockAlerts")) {
+            response.getWriter().write("[]"); // Return empty JSON array
+            System.out.println("No stock alerts set in session.");
+            return;
+        }
+
+        List<Map<String, Object>> lowStockProducts = new ArrayList<>();
+
+        try (Connection conn = DbCon.getConnection()) {
+            String sql = "SELECT b_name, stock FROM books WHERE stock <= 5";
+            PreparedStatement stmt = conn.prepareStatement(sql);
+            ResultSet rs = stmt.executeQuery();
+
+            while (rs.next()) {
+                Map<String, Object> item = new HashMap<>();
+                item.put("name", rs.getString("b_name"));
+                item.put("qty", rs.getInt("stock"));
+                lowStockProducts.add(item);
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        String json = new Gson().toJson(lowStockProducts);
+        response.getWriter().write(json);
+    }
 
 	
 	protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {

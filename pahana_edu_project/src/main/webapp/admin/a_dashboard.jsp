@@ -24,7 +24,8 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script>
-    window.contextPath = '<%= request.getContextPath() %>';
+	    window.contextPath = '<%= request.getContextPath() %>';
+	    window.userId = '<%= userId %>';
 	</script>
     <script src="../js/a_dashboard.js" defer></script>
     <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>

@@ -86,7 +86,7 @@ public class UserServlet extends HttpServlet {
     private void getUserInfo(HttpServletRequest request, HttpServletResponse response) {
         HttpSession session = request.getSession(false);
         User user = (User) session.getAttribute("user");
-
+        
         response.setContentType("application/json");
         response.setCharacterEncoding("UTF-8");
 

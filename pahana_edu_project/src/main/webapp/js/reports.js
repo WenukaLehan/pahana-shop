@@ -65,6 +65,28 @@ function handleDateRangeChange() {
     }
 }
 
+// Check Stock Alerts every 10 minutes
+function checkStockAlerts() {
+	    console.log('Checking stock alerts...');
+    fetch(window.contextPath + '/BookServlet')
+        .then(res => res.json())
+        .then(data => {
+            if (data.length > 0) {
+                let message = "⚠️ Low Stock Alert:\n\n";
+                data.forEach(item => {
+                    message += `- ${item.name}: ${item.qty} left\n`;
+                });
+                alert(message); // You can replace this with a nicer modal
+            }
+        })
+        .catch(err => console.error("Error fetching stock alerts:", err));
+}
+
+// Call every 10 minutes (600,000 ms)
+setInterval(checkStockAlerts, 600000);
+
+checkStockAlerts(); // Initial call to check stock on page load
+
 // Set Default Date Range (Last 30 days)
 function setDefaultDateRange() {
     const today = new Date();
