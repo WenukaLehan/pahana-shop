@@ -56,57 +56,67 @@ function initSettingsManagement() {
     const entriesPerPage = 10;
 
     // --- Helper Functions ---
-	
-	/**
-	   * Shows a notification popup.
-	   * @param {'success'|'error'|'info'} type - Type of notification (e.g., 'success', 'error', 'info').
-	   * @param {string} message - The message to display in the notification.
-	   * @param {number} duration - How long the notification should be visible in milliseconds (default: 3000).
-	   */
-	function showNotification(type, message, duration = 3000) {
-	    const container = document.getElementById('notificationContainer');
-	    const notification = document.createElement('div');
-	    notification.classList.add('notification-popup', type);
 
-	    let iconClass = '';
-	    let title = '';
-	    if (type === 'success') {
-	        iconClass = 'fa-solid fa-circle-check';
-	        title = 'Success!';
-	    } else if (type === 'error') {
-	        iconClass = 'fa-solid fa-circle-xmark';
-	        title = 'Error!';
-	    } else {
-	        iconClass = 'fa-solid fa-circle-info';
-	        title = 'Info';
-	    }
+    /**
+     * Shows a notification popup.
+     * @param {'success'|'error'|'info'} type - Type of notification (e.g., 'success', 'error', 'info').
+     * @param {string} message - The message to display in the notification.
+     * @param {number} duration - How long the notification should be visible in milliseconds (default: 3000).
+     */
+    function showNotification(type, message, duration = 3000) {
+        const container = document.getElementById('notificationContainer');
+        // Ensure container exists, create if not (good for robustness)
+        if (!container) {
+            console.warn('Notification container not found. Please add a div with id="notificationContainer" to your HTML.');
+            return;
+        }
 
-	    notification.innerHTML = `
-	        <div class="notification-icon"><i class="${iconClass}"></i></div>
-	        <div class="notification-content">
-	            <div class="notification-title">${title}</div>
-	            <div class="notification-message">${message}</div>
-	        </div>
-	        <button class="notification-close" onclick="this.closest('.notification-popup').remove();">&times;</button>
-	    `;
+        const notification = document.createElement('div');
+        notification.classList.add('notification-popup', type);
 
-	    container.appendChild(notification);
+        let iconClass = '';
+        let title = '';
+        if (type === 'success') {
+            iconClass = 'fa-solid fa-circle-check';
+            title = 'Success!';
+        } else if (type === 'error') {
+            iconClass = 'fa-solid fa-circle-xmark';
+            title = 'Error!';
+        } else {
+            iconClass = 'fa-solid fa-circle-info';
+            title = 'Info';
+        }
 
-	    // Remove the notification after a duration, allowing animation to complete
-	    setTimeout(() => {
-	        notification.style.animation = 'fadeOut 0.5s forwards'; // Trigger fade out animation
-	        setTimeout(() => {
-	            notification.remove();
-	        }, 500); // Remove from DOM after fade out completes
-	    }, duration);
-	}
+        notification.innerHTML = `
+            <div class="notification-icon"><i class="${iconClass}"></i></div>
+            <div class="notification-content">
+                <div class="notification-title">${title}</div>
+                <div class="notification-message">${message}</div>
+            </div>
+            <button class="notification-close" onclick="this.closest('.notification-popup').remove();">&times;</button>
+        `;
+
+        container.appendChild(notification);
+
+        // Remove the notification after a duration, allowing animation to complete
+        setTimeout(() => {
+            notification.style.animation = 'fadeOut 0.5s forwards'; // Trigger fade out animation
+            setTimeout(() => {
+                notification.remove();
+            }, 500); // Remove from DOM after fade out completes
+        }, duration);
+    }
 
     /**
      * Toggles the visibility of the loading modal.
      * @param {boolean} show - True to show the modal, false to hide.
      */
     function showLoadingModal(show) {
-        loadingModal.classList.toggle('show', show);
+        if (loadingModal) {
+            loadingModal.classList.toggle('show', show);
+        } else {
+            console.warn('Loading modal element not found. Please ensure an element with id="loadingModal" exists.');
+        }
     }
 
     /**
@@ -115,6 +125,10 @@ function initSettingsManagement() {
      * @param {HTMLImageElement} imagePreview - The image preview element.
      */
     function setupImagePreview(fileInput, imagePreview) {
+        if (!fileInput || !imagePreview) {
+            console.warn('Missing file input or image preview element for setupImagePreview.');
+            return;
+        }
         fileInput.addEventListener('change', (event) => {
             const file = event.target.files[0];
             if (file) {
@@ -124,6 +138,9 @@ function initSettingsManagement() {
                     imagePreview.style.display = 'block';
                 };
                 reader.readAsDataURL(file);
+            } else {
+                imagePreview.src = '';
+                imagePreview.style.display = 'none';
             }
         });
     }
@@ -134,69 +151,64 @@ function initSettingsManagement() {
      * Loads system settings from the server and updates the UI.
      */
     function loadSettingsData() {
-        try {
-            $.get(window.contextPath + '/SettingServlet', {}, function(data) {
-                if (data) {
-                    systemSettings.lowStockAlert.checked = data.LowStock || false;
-                    systemSettings.emailNotifications.checked = data.EmailNot || false;
-                    systemSettings.autoBackups.checked = data.AtuBackup || false;
-                } else {
-                    console.error('System settings data not found.');
-                }
-            }).fail(function(xhr, status, error) {
-                console.error('Error fetching system settings:', status, error);
-            });
-        } catch (e) {
-            console.error('Error loading settings data:', e);
-        }
+        $.get(window.contextPath + '/SettingServlet', {}, function(data) {
+            if (data) {
+                systemSettings.lowStockAlert.checked = data.LowStock || false;
+                systemSettings.emailNotifications.checked = data.EmailNot || false;
+                systemSettings.autoBackups.checked = data.AtuBackup || false;
+            } else {
+                showNotification('error', 'System settings data not found.');
+                console.error('System settings data not found.');
+            }
+        }).fail(function(xhr, status, error) {
+            showNotification('error', 'Error fetching system settings.');
+            console.error('Error fetching system settings:', status, error);
+        });
     }
 
     /**
      * Initializes the profile form with data for the current user.
      */
     function initializeProfileForm() {
-        try {
+        if (profileForm.imagePreview && window.userId) {
             profileForm.imagePreview.src = window.contextPath + '/GetProImage?id=' + window.userId + '&action=user';
             profileForm.imagePreview.style.display = 'block';
-
-            $.post(window.contextPath + '/user', { action: 'getUserInfo' }, function(data) {
-                if (data.success) {
-                    profileForm.fullName.value = data.data.name || '';
-                    profileForm.email.value = data.data.email || '';
-                    profileForm.phone.value = data.data.phone || '';
-                    profileForm.username.value = data.data.username || '';
-                } else {
-                    console.error('User profile data not found.');
-                }
-            }).fail(function(xhr, status, error) {
-                console.error('Error fetching user profile:', status, error);
-            });
-        } catch (e) {
-            console.error('Error initializing profile form:', e);
+        } else {
+            console.warn('Profile image preview or userId not available for initialization.');
         }
+
+        $.post(window.contextPath + '/user', { action: 'getUserInfo' }, function(data) {
+            if (data.success) {
+                profileForm.fullName.value = data.data.name || '';
+                profileForm.email.value = data.data.email || '';
+                profileForm.phone.value = data.data.phone || '';
+                profileForm.username.value = data.data.username || '';
+            } else {
+                showNotification('error', 'Failed to load user profile data.');
+                console.error('User profile data not found.');
+            }
+        }).fail(function(xhr, status, error) {
+            showNotification('error', 'Error fetching user profile.');
+            console.error('Error fetching user profile:', status, error);
+        });
     }
 
     /**
      * Fetches all employee data from the server and updates the table.
      */
     function fetchEmployees() {
-        try {
-            $.post(window.contextPath + '/SettingServlet', { action: 'getAllUsers' }, function(data) {
-                if (data.success)  {
-					console.log('Data received:', data);
-                    employees = data.data || [];
-                    // This is the crucial fix: call the update function here.
-					console.log('Fetched employees:', employees);
-                    updateEmployeeTable();
-                } else {
-                    console.error('Failed to fetch employees:', data.message);
-                }
-            }).fail(function(xhr, status, error) {
-                console.error('Error fetching employees:', status, error);
-            });
-        } catch (e) {
-            console.error('Error fetching employees:', e);
-        }
+        $.post(window.contextPath + '/SettingServlet', { action: 'getAllUsers' }, function(data) {
+            if (data.success) {
+                employees = data.data || [];
+                updateEmployeeTable();
+            } else {
+                showNotification('error', 'Failed to fetch employees: ' + data.message);
+                console.error('Failed to fetch employees:', data.message);
+            }
+        }).fail(function(xhr, status, error) {
+            showNotification('error', 'Error fetching employees.');
+            console.error('Error fetching employees:', status, error);
+        });
     }
 
     // --- Event Handlers ---
@@ -207,10 +219,9 @@ function initSettingsManagement() {
 
     // Profile Settings Handlers
     profileForm.saveBtn.addEventListener('click', () => {
-        showLoadingModal(true);
         const formData = new FormData();
         formData.append('action', 'updateUser');
-		formData.append('userId', window.userId); // Assuming window.userId is set to the current user's ID
+        formData.append('userId', window.userId); // Assuming window.userId is set to the current user's ID
         formData.append('name', profileForm.fullName.value);
         formData.append('email', profileForm.email.value);
         formData.append('phone', profileForm.phone.value);
@@ -223,9 +234,13 @@ function initSettingsManagement() {
                 method: 'POST',
                 body: formData
             })
-            .then(response => response.json())
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return response.json();
+            })
             .then(data => {
-                showLoadingModal(false);
                 if (data.success) {
                     showNotification('success', 'Profile updated successfully!');
                 } else {
@@ -233,25 +248,24 @@ function initSettingsManagement() {
                 }
             })
             .catch(error => {
-                showLoadingModal(false);
                 console.error('Error saving profile:', error);
-                alert('An error occurred while saving the profile.');
+                showNotification('error', 'An error occurred while saving the profile.');
             });
     });
 
     profileForm.cancelBtn.addEventListener('click', () => {
         // Re-initialize the form to reset it to the original state
         initializeProfileForm();
+        showNotification('info', 'Profile changes discarded.');
     });
 
     // Employee Management Handlers
     employeeForm.addBtn.addEventListener('click', () => {
         if (!employeeForm.name.value || !employeeForm.email.value || !employeeForm.phone.value || !employeeForm.role.value || !employeeForm.username.value || !employeeForm.profilePicture.files.length) {
-            alert('Please fill all required fields.');
+            showNotification('error', 'Please fill all required fields for the new employee.');
             return;
         }
 
-        showLoadingModal(true);
         const formData = new FormData();
         formData.append('action', 'addUser');
         formData.append('username', employeeForm.username.value);
@@ -265,11 +279,16 @@ function initSettingsManagement() {
                 method: 'POST',
                 body: formData
             })
-            .then(response => response.json())
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return response.json();
+            })
             .then(data => {
-                showLoadingModal(false);
                 if (data.success) {
-                    alert('Employee added successfully!');
+                    showNotification('success', 'Employee added successfully!');
+                    // Clear form fields after successful addition
                     employeeForm.name.value = '';
                     employeeForm.email.value = '';
                     employeeForm.role.value = 'admin'; // Reset to default
@@ -280,13 +299,12 @@ function initSettingsManagement() {
                     employeeForm.imagePreview.style.display = 'none';
                     fetchEmployees(); // Refresh the employee list
                 } else {
-                    alert('Failed to add employee: ' + data.message);
+                    showNotification('error', 'Failed to add employee: ' + data.message);
                 }
             })
             .catch(error => {
-                showLoadingModal(false);
                 console.error('Error adding new employee:', error);
-                alert('An error occurred while adding the employee.');
+                showNotification('error', 'An error occurred while adding the employee.');
             });
     });
 
@@ -304,7 +322,7 @@ function initSettingsManagement() {
 
         const startIndex = (currentPage - 1) * entriesPerPage;
         const paginatedEmployees = filteredEmployees.slice(startIndex, startIndex + entriesPerPage);
-        employeeTable.tableBody.innerHTML = '';
+        employeeTable.tableBody.innerHTML = ''; // Clear existing rows
 
         if (filteredEmployees.length === 0) {
             employeeTable.tableBody.innerHTML = `
@@ -320,26 +338,34 @@ function initSettingsManagement() {
 
         paginatedEmployees.forEach(emp => {
             const row = document.createElement('tr');
+            // Determine role display text
+            let roleText = 'N/A';
+            if (emp.role == 1) roleText = 'Admin';
+            else if (emp.role == 2) roleText = 'Cashier';
+            else if (emp.role == 3) roleText = 'Customer';
+
             row.innerHTML = `
-                <td><div class="user-cell"><img src="${window.contextPath}/GetProImage?id=${emp.id}&action=user" style="display:flex; max-height: 100px;max-width: 40px; margin-top: 10px;" alt="Profile" class="user-avatar">${emp.name}</div></td>
+                <td>
+                    <div class="user-cell">
+                        <img src="${window.contextPath}/GetProImage?id=${emp.id}&action=user" onerror="this.onerror=null;this.src='https://placehold.co/40x40/cccccc/333333?text=No+Image';" style="display:flex; max-height: 100px;max-width: 40px; margin-top: 10px;" alt="Profile" class="user-avatar">
+                        ${emp.name}
+                    </div>
+                </td>
                 <td>${emp.email}</td>
-				<td>
-				  ${emp.role == 1 ? 'Admin' : (emp.role == 2 ? 'Cashier' : (emp.role == 3 ? 'Customer' : 'N/A'))}
-				</td>
+                <td>${roleText}</td>
                 <td>${emp.phone}</td>
                 <td><span class="status-badge status-${emp.status}">${emp.status.charAt(0).toUpperCase() + emp.status.slice(1)}</span></td>
                 <td>
-					<button 
-					  class="action-icon deactivate" 
-					  data-id="${emp.id}" 
-					  data-status="${emp.status}"
-					  title="${emp.status === 'active' ? 'Deactivate' : 'Activate'} Employee"
-					  ${emp.role == 1 ? 'disabled' : ''}>
-					  
-					  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="${emp.status === 'active' ? '#e74c3c' : '#2ecc71'}">
-					    <path d="M12 2C6.47 2 2 6.47 2 12s4.47 10 10 10 10-4.47 10-10S17.53 2 12 2zm5 13.59L15.59 17 12 13.41 8.41 17 7 15.59 10.59 12 7 8.41 8.41 7 12 10.59 15.59 7 17 8.41 13.41 12 17 15.59z"/>
-					  </svg>
-					</button>
+                    <button
+                      class="action-icon deactivate"
+                      data-id="${emp.id}"
+                      data-status="${emp.status}"
+                      title="${emp.status === 'active' ? 'Deactivate' : 'Activate'} Employee"
+                      ${emp.role == 1 ? 'disabled' : ''}>
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="${emp.status === 'active' ? '#e74c3c' : '#2ecc71'}">
+                        <path d="M12 2C6.47 2 2 6.47 2 12s4.47 10 10 10 10-4.47 10-10S17.53 2 12 2zm5 13.59L15.59 17 12 13.41 8.41 17 7 15.59 10.59 12 7 8.41 8.41 7 12 10.59 15.59 7 17 8.41 13.41 12 17 15.59z"/>
+                      </svg>
+                    </button>
                 </td>
             `;
             employeeTable.tableBody.appendChild(row);
@@ -350,32 +376,31 @@ function initSettingsManagement() {
         // Add event listeners for the deactivate/activate buttons
         document.querySelectorAll('.action-icon.deactivate').forEach(btn => {
             btn.addEventListener('click', (e) => {
-				alert('This action will change the status of the employee.');
                 const id = parseInt(e.currentTarget.dataset.id);
-				console.log('Button clicked for employee ID:', id);
-				const status = e.currentTarget.dataset.status;
-				console.log('Current status:', status);
-                if (status) {
-                    showLoadingModal(true);
-                    const newStatus = status === 'active' ? 'inactive' : 'active';
-                    $.post(window.contextPath + '/SettingServlet', { action: 'updateUserStatus', userId: id, status: newStatus })
-                        .done(response => {
-                            if (response.success) {
-								fetchEmployees(); // Refresh the employee list
-                                updateEmployeeTable(employeeTable.searchInput.value);
-                                alert(`Employee ${newStatus}d successfully!`);
-                            } else {
-                                alert(`Failed to update employee status: ${response.message}`);
-                            }
-                        })
-                        .fail((xhr, status, error) => {
-                            console.error('Error updating employee status:', status, error);
-                            alert('An error occurred while updating the employee status.');
-                        })
-                        .always(() => {
-                            showLoadingModal(false);
-                        });
+                const status = e.currentTarget.dataset.status;
+
+                // Prevent action if the button is disabled (e.g., for Admin role)
+                if (e.currentTarget.disabled) {
+                    showNotification('info', 'Cannot change status for Admin users.');
+                    return;
                 }
+
+                showNotification('info', `Attempting to change status for employee ID: ${id} from ${status}.`);
+                const newStatus = status === 'active' ? 'inactive' : 'active';
+
+                $.post(window.contextPath + '/SettingServlet', { action: 'updateUserStatus', userId: id, status: newStatus })
+                    .done(response => {
+                        if (response.success) {
+                            showNotification('success', `Employee status updated to ${newStatus} successfully!`);
+                            fetchEmployees(); // Re-fetch all employees to update the table with the latest status
+                        } else {
+                            showNotification('error', `Failed to update employee status: ${response.message}`);
+                        }
+                    })
+                    .fail((xhr, status, error) => {
+                        console.error('Error updating employee status:', status, error);
+                        showNotification('error', 'An error occurred while updating the employee status.');
+                    });
             });
         });
     }
@@ -388,27 +413,36 @@ function initSettingsManagement() {
         const totalPages = Math.ceil(totalItems / entriesPerPage);
         const startItem = Math.min((currentPage - 1) * entriesPerPage + 1, totalItems);
         const endItem = Math.min(currentPage * entriesPerPage, totalItems);
-        employeeTable.paginationInfo.textContent = `Showing ${startItem} to ${endItem} of ${totalItems} entries`;
+
+        // Handle case where totalItems is 0
+        if (totalItems === 0) {
+            employeeTable.paginationInfo.textContent = `Showing 0 to 0 of 0 entries`;
+        } else {
+            employeeTable.paginationInfo.textContent = `Showing ${startItem} to ${endItem} of ${totalItems} entries`;
+        }
+
         employeeTable.prevBtn.disabled = currentPage === 1;
         employeeTable.nextBtn.disabled = currentPage === totalPages || totalPages === 0;
 
         employeeTable.paginationNumbers.innerHTML = '';
-        for (let i = 1; i <= totalPages; i++) {
-            const pageBtn = document.createElement('button');
-            pageBtn.classList.add('page-number');
-            if (i === currentPage) pageBtn.classList.add('active');
-            pageBtn.textContent = i;
-            pageBtn.addEventListener('click', () => {
-                currentPage = i;
-                updateEmployeeTable(employeeTable.searchInput.value);
-            });
-            employeeTable.paginationNumbers.appendChild(pageBtn);
+        if (totalPages > 0) { // Only render page numbers if there are pages
+            for (let i = 1; i <= totalPages; i++) {
+                const pageBtn = document.createElement('button');
+                pageBtn.classList.add('page-number');
+                if (i === currentPage) pageBtn.classList.add('active');
+                pageBtn.textContent = i;
+                pageBtn.addEventListener('click', () => {
+                    currentPage = i;
+                    updateEmployeeTable(employeeTable.searchInput.value);
+                });
+                employeeTable.paginationNumbers.appendChild(pageBtn);
+            }
         }
     }
 
     // Employee Table Event Listeners
     employeeTable.searchInput.addEventListener('input', (e) => {
-        currentPage = 1;
+        currentPage = 1; // Reset to first page on new search
         updateEmployeeTable(e.target.value);
     });
 
@@ -429,12 +463,12 @@ function initSettingsManagement() {
 
     // System Settings Handlers
     systemSettings.saveBtn.addEventListener('click', () => {
-        showLoadingModal(true);
         const settingsData = {
             stockAlerts: systemSettings.lowStockAlert.checked,
             email: systemSettings.emailNotifications.checked,
             backup: systemSettings.autoBackups.checked
         };
+
         const updatePromises = Object.keys(settingsData).map(key => {
             return new Promise((resolve, reject) => {
                 $.post(window.contextPath + '/SettingServlet', { action: 'updateSettings', name: key, value: settingsData[key] })
@@ -454,19 +488,17 @@ function initSettingsManagement() {
         Promise.all(updatePromises)
             .then(results => {
                 console.log('System settings updated successfully:', results);
-                showLoadingModal(false);
-                alert('System settings updated successfully!');
+                showNotification('success', 'System settings updated successfully!');
             })
             .catch(error => {
                 console.error('An error occurred updating system settings:', error);
-                showLoadingModal(false);
-                alert('An error occurred while saving system settings. Please check the console for details.');
+                showNotification('error', 'An error occurred while saving system settings. Please check the console for details.');
             });
     });
 
     // --- Initial Function Calls ---
+    // Load settings and profile data, then fetch employees to populate the table.
     loadSettingsData();
     initializeProfileForm();
-    // This is the correct way to start the process:
     fetchEmployees();
 }
