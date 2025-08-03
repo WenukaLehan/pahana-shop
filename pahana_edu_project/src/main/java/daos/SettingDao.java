@@ -26,7 +26,7 @@ public class SettingDao {
 	
 	public List<User> getAllUsers() {
 		List<User> users = new ArrayList<>();
-		String query = "SELECT * FROM users";
+		String query = "SELECT * FROM users WHERE role != 3";
 		
 		try (PreparedStatement ps = conn.prepareStatement(query);
 			 ResultSet rs = ps.executeQuery()) {

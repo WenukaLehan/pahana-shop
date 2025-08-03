@@ -257,7 +257,7 @@ public class SettingServlet extends HttpServlet {
 				Map<String, Object> jsonResponse = new HashMap<>();
 				jsonResponse.put("success", true);
 				jsonResponse.put("data", users);
-				out.print(new Gson().toJson(users));
+				out.print(new Gson().toJson(jsonResponse));
 			} else {
 				Map<String, Object> errorResponse = new HashMap<>();
 				errorResponse.put("success", false);

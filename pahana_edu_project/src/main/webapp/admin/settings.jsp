@@ -195,6 +195,11 @@
         </div>
     </div>
 
+<!-- Notification Container -->
+    <div id="notificationContainer">
+        <!-- Notifications will be appended here -->
+    </div>
+
     <!-- Loading Modal -->
     <div class="modal" id="loadingModal">
         <div class="modal-content loading-content">
