@@ -25,12 +25,12 @@ import java.util.Map;
 @WebServlet("/user")
 public class UserServlet extends HttpServlet {
     private static final long serialVersionUID = 1L;
-    private UserDao userModel = new UserDao();
+    public UserDao userModel = new UserDao();
     
  
 
     @Override
-    protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+    public void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         String action = request.getParameter("action");
 
         try {
@@ -61,7 +61,7 @@ public class UserServlet extends HttpServlet {
 					getUserInfo(request, response);
 					break;
                 default:
-                    response.sendRedirect("Login.jsp");
+                    response.sendRedirect("./views/Login.jsp");
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -133,7 +133,7 @@ public class UserServlet extends HttpServlet {
                 roleCookie.setPath("/"); // Set path to root for global access
                 response.addCookie(roleCookie);
                 
-                response.sendRedirect("./admin/a_dashboard.jsp");
+                response.sendRedirect("./views/admin/a_dashboard.jsp");
             } else {
                 request.setAttribute("loginError", "Invalid username or password.");
                 request.getRequestDispatcher("Login.jsp").forward(request, response);

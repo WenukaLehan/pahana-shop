@@ -51,7 +51,7 @@ public class EmailSender {
         messageBodyPart.setContent(htmlContent, "text/html");
 
         MimeBodyPart logoPart = new MimeBodyPart();
-        String path = request.getServletContext().getRealPath("/images/logo.png");
+        String path = request.getServletContext().getRealPath("./views/images/logo.png");
         DataSource fds = new FileDataSource(path);
         logoPart.setDataHandler(new DataHandler(fds));
         logoPart.setHeader("Content-ID", "<logoImage>");
@@ -99,7 +99,7 @@ public class EmailSender {
         attachmentPart.setFileName(source.getName());
 
         MimeBodyPart logoPart = new MimeBodyPart();
-        String path = request.getServletContext().getRealPath("/images/logo.png");
+        String path = request.getServletContext().getRealPath("./views/images/logo.png");
         DataSource fds = new FileDataSource(path);
         logoPart.setDataHandler(new DataHandler(fds));
         logoPart.setHeader("Content-ID", "<logoImage>");
@@ -159,7 +159,7 @@ public class EmailSender {
         // 2. Add the inline logo image part
         MimeBodyPart logoPart = new MimeBodyPart();
         // Get the real path to the logo image within the web application
-        String logoPath = request.getServletContext().getRealPath("/images/logo.png");
+        String logoPath = request.getServletContext().getRealPath("./views/images/logo.png");
         DataSource fds = new FileDataSource(logoPath);
         logoPart.setDataHandler(new DataHandler(fds));
         logoPart.setHeader("Content-ID", "<logoImage>"); // Content-ID for embedding in HTML

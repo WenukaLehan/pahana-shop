@@ -53,7 +53,7 @@
                 </script>
             <% } %>
 
-            <form id="loginForm" action="user" method="POST">
+            <form id="loginForm" action="<%= request.getContextPath() %>/user" method="POST">
                 <input type="hidden" name="action" value="login">
                 
                 <div class="input-group">
@@ -182,7 +182,7 @@
                     btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Sending...');
                     messageDiv.html('');
 
-                    $.post('user', { action: 'send_code', email: email }, function (response) {
+                    $.post(<%= request.getContextPath() %>'/user', { action: 'send_code', email: email }, function (response) {
                         if (response.status === 'success') {
                             $('#emailStep').slideUp();
                             $('#resetStep').slideDown();

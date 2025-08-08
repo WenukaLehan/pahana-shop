@@ -154,7 +154,7 @@ document.addEventListener('DOMContentLoaded', () => {
     window.confirmLogout = () => {
 		$.post(window.contextPath + '/user', { action: 'logout' }, (response) => {
 		    if (response.success) {
-		        window.location.href = window.contextPath + '/Login.jsp';
+		        window.location.href = window.contextPath + '/views/Login.jsp';
 		    } else {
 		        alert('Logout failed. Please try again.');
 		        console.error('Logout error:', response.message);
