@@ -5,8 +5,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pahana Edu - Customer Dashboard</title>
+    <link rel="icon" href="./images/icont.png" type="image/x-icon">
+    <title>Pahana EDU | Dashboard</title>
+      <script>
+	    window.contextPath = '<%= request.getContextPath() %>';
+	</script>
     <!-- Bootstrap CSS -->
+     <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
     <!-- Font Awesome for icons -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
@@ -85,10 +90,13 @@
                                     <label for="address" class="form-label">Shipping Address</label>
                                     <textarea class="form-control" id="address" rows="3">123 Learning Lane, Apt 4B, Knowledge City, LC 12345</textarea>
                                 </div>
-                                <div class="mb-4">
-                                    <label for="password" class="form-label">New Password</label>
-                                    <input type="password" class="form-control" id="password" placeholder="Leave blank to keep current password">
+                                <div class="mb-3">
+                                     <label class="form-label">Select profile image</label>
+                					 <input type="file" class="form-control" name="image" id="userAvatar" accept="image/png" required>
                                 </div>
+                                <div class="form-group">
+					                <img id="avatarPreview" src="" alt="Avatar Preview" style="display:none; max-height: 150px; margin-top: 10px;" />
+					            </div>
                                 <div class="text-center">
                                     <button type="submit" class="btn btn-primary-theme">Save Changes</button>
                                 </div>
@@ -104,7 +112,6 @@
                                         <tr>
                                             <th>Order ID</th>
                                             <th>Date</th>
-                                            <th>Items</th>
                                             <th>Total</th>
                                             <th>Status</th>
                                             <th>Actions</th>
@@ -151,7 +158,6 @@
                 <div class="modal-body">
                     <p><strong>Order ID:</strong> <span id="modalOrderId"></span></p>
                     <p><strong>Date:</strong> <span id="modalOrderDate"></span></p>
-                    <p><strong>Items:</strong> <span id="modalOrderItems"></span></p>
                     <p><strong>Total:</strong> <span id="modalOrderTotal"></span></p>
                     <p><strong>Status:</strong> <span id="modalOrderStatus"></span></p>
                     <hr>
@@ -168,50 +174,95 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
     <script>
     
-    const ordersData = [
-        {
-            id: "#PE2025001",
-            date: "2025-07-28",
-            items: "Science Essentials",
-            total: "$49.99",
-            status: "Delivered"
-        },
-        {
-            id: "#PE2025002",
-            date: "2025-07-25",
-            items: "History Unveiled, Mathematics Made Simple",
-            total: "$89.98",
-            status: "Shipped"
-        },
-        {
-            id: "#PE2025003",
-            date: "2025-07-20",
-            items: "Language Learning Guide",
-            total: "$39.99",
-            status: "Pending"
-        },
-        {
-            id: "#PE2025004",
-            date: "2025-07-15",
-            items: "Science Essentials",
-            total: "$49.99",
-            status: "Cancelled"
-        },
-        {
-            id: "#PE2025005",
-            date: "2025-07-10",
-            items: "Physics Fundamentals",
-            total: "$59.99",
-            status: "Delivered"
-        },
-        {
-            id: "#PE2025006",
-            date: "2025-07-05",
-            items: "Biology Basics, Chemistry Core",
-            total: "$99.98",
-            status: "Shipped"
+    let ordersData = []; 
+    
+    // Function to fetch orders data (simulated)
+    function fetchOrdersData() {
+        
+    	try{
+    		
+    		$.post(window.contextPath + '/OrderServlet', { action: 'getAllOrders'  }, (response) => {
+    		    if (response.success) {
+    		        ordersData = response.orders || [];
+    		    } else {
+    		        console.error('Failed to fetch orders:', response.message);
+    		    }
+    		}).fail(() => {
+    		    console.error('Error fetching orders data');
+    		});
+    	
+    	} catch (error) {
+    		console.error("Error fetching orders data:", error);
+    	}
+    	
+    }
+    
+    // Function to fetch customer data (simulated)
+    function fetchCustomers() {
+        try {
+            $.post('CustomerServlet', { action: 'getCustomer' }, (response) => {
+                if (response) {
+                    const customer = response;
+                    console.log("Customer data fetched:", customer); // Debugging line
+                    document.getElementById('fullName').value = customer.name || '';
+                    document.getElementById('email').value = customer.email || '';
+                    document.getElementById('phone').value = customer.phone || '';
+                    document.getElementById('address').value = customer.address || '';
+                    const avatarPreview = document.getElementById('avatarPreview');
+                    avatarPreview.src = 'GetProImage?id='+customer.u_id || '';
+                    avatarPreview.style.display = 'block';
+                } else {
+                    console.error('Failed to fetch customer details:', response.message);
+                }
+            }).fail(() => {
+                console.error('Error fetching customer data');
+            });
+        } catch (error) {
+            console.error("Error fetching customer data:", error);
         }
-    ];
+    }
+    
+    // Function to update profile
+    function updateProfile() {
+        const fullName = document.getElementById('fullName').value;
+        const email = document.getElementById('email').value;
+        const phone = document.getElementById('phone').value;
+        const address = document.getElementById('address').value;
+        const avatarFile = document.getElementById('userAvatar').files[0];
+
+        if (!fullName || !email || !phone || !address) {
+            showNotification('error', 'Please fill in all fields.', 4000);
+            return;
+        }
+
+        const formData = new FormData();
+        formData.append('name', fullName);
+        formData.append('email', email);
+        formData.append('phone', phone);
+        formData.append('address', address);
+        formData.append('action', 'updateCustomerUser');
+        if (avatarFile) {
+            formData.append('image', avatarFile);
+        }
+
+        $.ajax({
+            url: 'CustomerServlet',
+            type: 'POST',
+            data: formData,
+            processData: false,
+            contentType: false,
+            success: function(response) {
+                if (response.success) {
+                    console.log('success'+'Profile updated successfully!', 4000);
+                } else {
+                	console.log('error'+ response.message, 4000);
+                }
+            },
+            error: function() {
+            	console.log('error Failed to update profile. Please try again.', 4000);
+            }
+        });
+    }
     
 document.addEventListener('DOMContentLoaded', function() {
 
@@ -220,6 +271,10 @@ document.addEventListener('DOMContentLoaded', function() {
     let currentOrderIndex = 0;
     const ordersPerLoad = 4;
     let isLoading = false;
+    
+    fetchCustomers();
+    
+    fetchOrdersData();
 
     // Dynamic order loading function
     function loadOrders(startIndex = 0, count = ordersPerLoad) {
@@ -252,6 +307,8 @@ document.addEventListener('DOMContentLoaded', function() {
             loadMoreBtn.style.display = 'block';
         }
     }
+    
+    
 
     // Create individual order row
     function createOrderRow(order) {
@@ -263,18 +320,16 @@ document.addEventListener('DOMContentLoaded', function() {
         console.log("ordrs", order); // Will show individual order object
 
         row.innerHTML = `
-            <td>\${order.id}</td>
-            <td>\${order.date}</td>
-            <td>\${order.items}</td>
-            <td>\${order.total}</td>
-            <td><span class="status-\${order.status.toLowerCase()} status-badge">\${order.status}</span></td>
+            <td>\${order.orderId}</td>
+            <td>\${order.orderDate}</td>
+            <td>Rs: \${order.totalAmount}</td>
+            <td><span class="status-pending status-badge">\${order.method}</span></td>
             <td>
                 <button class="btn btn-sm btn-outline-warning view-details-btn"
-                    data-order-id="\${order.id}"
-                    data-order-date="\${order.date}"
-                    data-order-items="\${order.items}"
-                    data-order-total="\${order.total}"
-                    data-order-status="\${order.status}">
+                    data-order-id="\${order.orderId}"
+                    data-order-date="\${order.orderDate}"
+                    data-order-total="Rs: \${order.totalAmount}"
+                    data-order-status="\${order.method}">
                     View Details
                 </button>
             </td>
@@ -289,8 +344,16 @@ document.addEventListener('DOMContentLoaded', function() {
         this.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Logging out...';
         this.disabled = true;
         setTimeout(() => {
-            alert('You have been logged out successfully!');
-            window.location.href = 'index.html';
+        	$.post(window.contextPath + '/user', { action: 'logout' }, (response) => {
+    		    if (response.success) {
+    		        window.location.href = window.contextPath + '/Login.jsp';
+    		    } else {
+    		        alert('Logout failed. Please try again.');
+    		        console.error('Logout error:', response.message);
+    		    }
+    		}).fail(() => {
+    		    alert('Logout failed. Please try again.');
+    		});
         }, 1000);
     });
 
@@ -305,6 +368,28 @@ document.addEventListener('DOMContentLoaded', function() {
             isLoading = false;
         }, 1500);
     });
+    
+    document.getElementById('userAvatar').addEventListener('change', function () {
+        const file = this.files[0];
+        if (file) {
+            if (file.type === 'image/png' || file.type === 'image/jpeg') { // Allow PNG and JPEG
+                const reader = new FileReader();
+                reader.onload = function (e) {
+                    const preview = document.getElementById('avatarPreview');
+                    preview.src = e.target.result;
+                    preview.style.display = 'block';
+                };
+                reader.readAsDataURL(file);
+            } else {
+                showNotification('error', "Please select a PNG or JPEG image.", 4000);
+                this.value = ''; // reset file input
+                document.getElementById('avatarPreview').style.display = 'none';
+            }
+        } else {
+            document.getElementById('avatarPreview').style.display = 'none';
+            document.getElementById('avatarPreview').src = '';
+        }
+    });
 
     // Profile Save
     document.getElementById('profileForm').addEventListener('submit', function (e) {
@@ -316,7 +401,7 @@ document.addEventListener('DOMContentLoaded', function() {
         setTimeout(() => {
             submitBtn.innerHTML = originalText;
             submitBtn.disabled = false;
-            const form = document.querySelector('#profileSettings');
+            updateProfile();
             form.style.background = 'rgba(40, 167, 69, 0.1)';
             setTimeout(() => {
                 form.style.background = 'var(--card-bg)';

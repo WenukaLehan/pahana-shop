@@ -61,7 +61,7 @@ public class UserServlet extends HttpServlet {
 					getUserInfo(request, response);
 					break;
                 default:
-                    response.sendRedirect("./views/Login.jsp");
+                    response.sendRedirect("./Login.jsp");
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -69,23 +69,9 @@ public class UserServlet extends HttpServlet {
         }
     }
 
-//    @Override
-//    protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-//        String action = request.getParameter("action");
-//        if ("logout".equals(action)) {
-//            HttpSession session = request.getSession(false);
-//            if (session != null) {
-//                session.invalidate();
-//            }
-//            response.sendRedirect("Login.jsp");
-//        }
-//    }
-    
-
-
     private void getUserInfo(HttpServletRequest request, HttpServletResponse response) {
         HttpSession session = request.getSession(false);
-        User user = (User) session.getAttribute("user");
+        User user = session.getAttribute("user") != null ? (User) session.getAttribute("user") : null;
         
         response.setContentType("application/json");
         response.setCharacterEncoding("UTF-8");
@@ -133,7 +119,19 @@ public class UserServlet extends HttpServlet {
                 roleCookie.setPath("/"); // Set path to root for global access
                 response.addCookie(roleCookie);
                 
-                response.sendRedirect("./views/admin/a_dashboard.jsp");
+                if 
+                (user.getRole() == 1 || user.getRole() == 2) {
+                	response.sendRedirect("./index.html");
+				} else if (user.getRole() == 3) {
+					response.sendRedirect("./customer.jsp");
+				} else {
+					request.setAttribute("loginError", "Invalid user role.");
+					request.getRequestDispatcher("Login.jsp").forward(request, response);
+					return;
+                	
+                }
+                
+                
             } else {
                 request.setAttribute("loginError", "Invalid username or password.");
                 request.getRequestDispatcher("Login.jsp").forward(request, response);

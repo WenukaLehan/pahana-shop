@@ -169,6 +169,7 @@ public class CustomerDao {
          // 1. Update users table
             String updateUserSQL;
             if (customer.getImage() != null) {
+            					System.out.println("Updating user with image.");
                 updateUserSQL = "UPDATE users SET name = ?, phone = ?, email = ?, p_image = ? WHERE u_id = ?";
                 userStmt = conn.prepareStatement(updateUserSQL);
                 userStmt.setString(1, customer.getName());
@@ -176,7 +177,11 @@ public class CustomerDao {
                 userStmt.setString(3, customer.getEmail());
                 userStmt.setBlob(4, customer.getImage());
                 userStmt.setString(5, customer.getU_id());
+                if (customer.getImage() == null) {
+					System.out.println("Image is null, not updating image in users table.");
+				}
             } else {
+            	System.out.println("No image provided, updating without image.");
                 updateUserSQL = "UPDATE users SET name = ?, phone = ?, email = ? WHERE u_id = ?";
                 userStmt = conn.prepareStatement(updateUserSQL);
                 userStmt.setString(1, customer.getName());
@@ -209,6 +214,93 @@ public class CustomerDao {
                 customerStmt.setString(4, customer.getStatus());
                 customerStmt.setString(5, customer.getPhone());
                 customerStmt.setString(6, customer.getU_id());
+            }
+
+            int customerRows = customerStmt.executeUpdate();
+            if (customerRows == 0) throw new SQLException("Customer update failed.");
+
+            conn.commit();
+
+            // Optional: Send update notification email
+            EmailSender.sendEmail(
+                customer.getEmail(),
+                "Your Pahana EDU Profile Has Been Updated",
+                "Dear " + customer.getName() + ",<br/>" +
+                "Your account information has been updated successfully.<br/>" +
+                "If you didn't request this change, please contact support immediately.<br/><br/>" +
+                "Thank you,<br/>Pahana EDU",
+                request
+            );
+
+            return true;
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            try {
+                if (conn != null) conn.rollback();
+            } catch (SQLException rollbackEx) {
+                rollbackEx.printStackTrace();
+            }
+            return false;
+
+        } finally {
+            try { if (userStmt != null) userStmt.close(); } catch (Exception ignored) {}
+            try { if (customerStmt != null) customerStmt.close(); } catch (Exception ignored) {}
+            try { if (conn != null) { conn.setAutoCommit(true); conn.close(); } } catch (Exception ignored) {}
+        }
+    }
+    
+    
+    public boolean updateCustomerUserWithUser(Customer customer, HttpServletRequest request) {
+        Connection conn = null;
+        PreparedStatement userStmt = null;
+        PreparedStatement customerStmt = null;
+
+        try {
+            conn = DbCon.getConnection();
+            conn.setAutoCommit(false); // Begin transaction
+
+         // 1. Update users table
+            String updateUserSQL;
+            if (customer.getImage() != null) {
+                updateUserSQL = "UPDATE users SET name = ?, phone = ?, email = ?, p_image = ? WHERE u_id = ?";
+                userStmt = conn.prepareStatement(updateUserSQL);
+                userStmt.setString(1, customer.getName());
+                userStmt.setString(2, customer.getPhone());
+                userStmt.setString(3, customer.getEmail());
+                userStmt.setBlob(4, customer.getImage());
+                userStmt.setString(5, customer.getU_id());
+            } else {
+                updateUserSQL = "UPDATE users SET name = ?, phone = ?, email = ? WHERE u_id = ?";
+                userStmt = conn.prepareStatement(updateUserSQL);
+                userStmt.setString(1, customer.getName());
+                userStmt.setString(2, customer.getPhone());
+                userStmt.setString(3, customer.getEmail());
+                userStmt.setString(4, customer.getU_id());
+            }
+
+
+            int userRows = userStmt.executeUpdate();
+            if (userRows == 0) throw new SQLException("User update failed.");
+
+            String updateCustomerSQL;
+            if (customer.getImage() != null) {
+                updateCustomerSQL = "UPDATE customers SET full_name = ?, address = ?, email = ?, p_image = ?, phone_nu = ? WHERE u_id = ?";
+                customerStmt = conn.prepareStatement(updateCustomerSQL);
+                customerStmt.setString(1, customer.getName());
+                customerStmt.setString(2, customer.getAddress());
+                customerStmt.setString(3, customer.getEmail());
+                customerStmt.setBlob(4, customer.getImage());
+                customerStmt.setString(5, customer.getPhone());
+                customerStmt.setString(6, customer.getU_id());
+            } else {
+                updateCustomerSQL = "UPDATE customers SET full_name = ?, address = ?, email = ?, phone_nu = ? WHERE u_id = ?";
+                customerStmt = conn.prepareStatement(updateCustomerSQL);
+                customerStmt.setString(1, customer.getName());
+                customerStmt.setString(2, customer.getAddress());
+                customerStmt.setString(3, customer.getEmail());
+                customerStmt.setString(4, customer.getPhone());
+                customerStmt.setString(5, customer.getU_id());
             }
 
             int customerRows = customerStmt.executeUpdate();

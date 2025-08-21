@@ -8,6 +8,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.Part;
 import models.Customer;
+import models.User;
 
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -50,6 +51,9 @@ public class CustomerServlet extends HttpServlet {
 				break;
 			case "updateCustomer":
 				updateCustomer(request, response);
+				break;
+			case "updateCustomerUser":
+				updateCustomerUser(request, response);
 				break;
 			case "deleteCustomer":
 				deleteCustomer(request, response);
@@ -107,10 +111,51 @@ public class CustomerServlet extends HttpServlet {
 		}
 		
 	}
+	
+	private String getUid(String id) {
+			
+			int idInt;
+			try {
+				idInt = Integer.parseInt(id);
+			} catch (NumberFormatException e) {
+				throw new IllegalArgumentException("ID must be a non-negative integer");
+			}
+			
+			if (id == null || id.isEmpty()) {
+				throw new IllegalArgumentException("ID must be a non-negative integer");
+			}
+			return "p" + String.format("%03d", idInt); // Format ID as "pXX" where XX is the zero-padded integer
+		}
 
 
 	private void getCustomer(HttpServletRequest request, HttpServletResponse response) {
-		// TODO Auto-generated method stub
+		try {
+			response.setContentType("application/json");
+	        response.setCharacterEncoding("UTF-8");
+	        
+	        CustomerDao customerDao = new CustomerDao();
+	        User user = (User) request.getSession().getAttribute("user");
+	        
+	        Customer customer = customerDao.getCustomer(getUid(user.getId()));
+	        
+	        try (PrintWriter out = response.getWriter()) {
+	        	if (customer != null) {
+	        		out.print(new Gson().toJson(customer));
+	        	} else {
+	        		out.print("{\"success\": false, \"message\": \"Customer not found.\"}");
+	        	}
+	        	out.flush();
+	        }
+			
+		}
+		catch (Exception e) {
+			e.printStackTrace();
+			try {
+				response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Error retrieving customer");
+			} catch (IOException ioException) {
+				ioException.printStackTrace();
+			}
+		}
 		
 	}
 
@@ -163,6 +208,9 @@ public class CustomerServlet extends HttpServlet {
 	        Part imagePart = request.getPart("image");
 	        if (imagePart != null && imagePart.getSize() > 0) {
 	            customer.setImage(imagePart.getInputStream());
+	            System.out.println("Image part size: " + imagePart.getSize());
+	        }else {
+	        	System.out.println("Image part is null or empty");
 	        }
 	        
 	        boolean isUpdated = customerDao.updateCustomerWithUser(customer, request);
@@ -181,7 +229,45 @@ public class CustomerServlet extends HttpServlet {
 			response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Error updating customer");
 		}
 	}
-
+	
+	
+	private void updateCustomerUser(HttpServletRequest request, HttpServletResponse response) throws IOException {
+		// TODO Auto-generated method stub
+		try {
+			response.setContentType("application/json");
+	        response.setCharacterEncoding("UTF-8");
+	        User user = (User) request.getSession().getAttribute("user");
+	        
+	        CustomerDao customerDao = new CustomerDao();
+	        Customer customer = new Customer();
+	        
+	        // Assuming you have methods to get parameters from the request
+	        customer.setU_id(getUid(user.getId()));
+	        customer.setName(request.getParameter("name"));
+	        customer.setEmail(request.getParameter("email"));
+	        customer.setPhone(request.getParameter("phone"));
+	        customer.setAddress(request.getParameter("address"));
+	        Part imagePart = request.getPart("image");
+	        if (imagePart != null && imagePart.getSize() > 0) {
+	            customer.setImage(imagePart.getInputStream());
+	        }
+	        
+	        boolean isUpdated = customerDao.updateCustomerUserWithUser(customer, request);
+	        
+	        try (PrintWriter out = response.getWriter()) {
+	        	if (isUpdated) {
+	        		out.print("{\"success\": true, \"message\": \"Customer updated successfully.\"}");
+	        	} else {
+	        		out.print("{\"success\": false, \"message\": \"Failed to update customer.\"}");
+	        	}
+	        	out.flush();
+	        }
+	        
+		} catch (Exception e) {
+			e.printStackTrace();
+			response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Error updating customer");
+		}
+	}
 
 	private void addCustomer(HttpServletRequest request, HttpServletResponse response) throws IOException {
 		// TODO Auto-generated method stub
@@ -201,6 +287,9 @@ public class CustomerServlet extends HttpServlet {
 	        Part imagePart = request.getPart("image");
 	        if (imagePart != null && imagePart.getSize() > 0) {
 	            customer.setImage(imagePart.getInputStream());
+	            System.out.println("Image part size: " + imagePart.getSize());
+	        }else {
+	        	System.out.println("Image part is null or empty");
 	        }// Assuming image is uploaded as a part
 	        
 	        // Handle image upload if necessary

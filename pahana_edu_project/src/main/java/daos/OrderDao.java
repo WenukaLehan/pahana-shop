@@ -1,10 +1,13 @@
 package daos;
 
-import java.sql.Connection;
+import java.sql.*;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.List;
 
 import models.Order;
+import models.OrderItem;
+import models.User;
 import util.DbCon;
 
 public class OrderDao {
@@ -70,8 +73,46 @@ public class OrderDao {
 	}
 
 	public Order getOrderDetails(int orderId) {
-		// Logic to retrieve order details from the database
-		return null;
+		Order order = null;
+		String orderQuery = "SELECT * FROM orders WHERE invoice_id = ?";
+		String itemsQuery = "SELECT * FROM oder_items WHERE order_id = ?";
+
+		try (PreparedStatement orderStmt = conn.prepareStatement(orderQuery);
+			 PreparedStatement itemsStmt = conn.prepareStatement(itemsQuery)) {
+
+			// Fetch order details
+			orderStmt.setInt(1, orderId);
+			ResultSet rs = orderStmt.executeQuery();
+			if (rs.next()) {
+				order = new Order();
+				order.setOrderId(rs.getInt("invoice_id"));
+				order.setCustomerId(rs.getString("cus_id"));
+				order.setTotalAmount(rs.getDouble("total"));
+				order.setOrderDate(rs.getString("date")); // Assuming date is a String
+				order.setMethod(rs.getString("method"));
+			}
+
+			if (order != null) {
+				// Fetch and add order items
+				itemsStmt.setInt(1, orderId);
+				ResultSet itemsRs = itemsStmt.executeQuery();
+				List<OrderItem> items = new ArrayList<>();
+				while (itemsRs.next()) {
+					OrderItem item = new OrderItem();
+					item.setOrderItemId(itemsRs.getInt("item_id"));
+					item.setOrderId(itemsRs.getInt("order_id"));
+					item.setProductId(itemsRs.getInt("product_id"));
+					item.setQuantity(itemsRs.getInt("quantity"));
+					item.setPrice(itemsRs.getDouble("price"));
+					items.add(item);
+				}
+				order.setOrderItems(items);
+			}
+
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+		return order;
 	}
 	
 	public int getInvoice() {
@@ -94,9 +135,49 @@ public class OrderDao {
 		}
 	}
 	
-	public List<Order> getAllOrders() {
-		// Logic to retrieve all orders from the database
-		return null;
+	public List<Order> getAllOrders(String userId) {
+		List<Order> orders = new ArrayList<>();
+		String query = "SELECT * FROM orders WHERE cus_id = ?";
+
+		try (PreparedStatement stmt = conn.prepareStatement(query)) {
+			System.out.println("Fetching orders for user: " + userId);
+			stmt.setString(1, userId);
+			ResultSet rs = stmt.executeQuery();
+			while (rs.next()) {
+				Order order = new Order();
+				order.setOrderId(rs.getInt("invoice_id"));
+				order.setCustomerId(rs.getString("cus_id"));
+				order.setTotalAmount(rs.getDouble("total"));
+				order.setOrderDate(rs.getString("date"));
+				order.setMethod(rs.getString("method"));
+				
+				// Fetch order items for each order
+				String itemsQuery = "SELECT * FROM oder_items WHERE order_id = ?";
+				try (PreparedStatement itemsStmt = conn.prepareStatement(itemsQuery)) {
+					itemsStmt.setInt(1, order.getOrderId());
+					ResultSet itemsRs = itemsStmt.executeQuery();
+					List<OrderItem> items = new ArrayList<>();
+					while (itemsRs.next()) {
+						OrderItem item = new OrderItem();
+						item.setOrderItemId(itemsRs.getInt("order_item_id"));
+						item.setOrderId(itemsRs.getInt("order_id"));
+						item.setProductId(itemsRs.getInt("product_id"));
+						item.setQuantity(itemsRs.getInt("quantity"));
+						item.setPrice(itemsRs.getDouble("price"));
+						items.add(item);
+					}
+					order.setOrderItems(items);
+				}
+				
+				orders.add(order);
+				
+			}
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+		System.out.println(orders);
+		return orders;
+		
 	}
 
 }

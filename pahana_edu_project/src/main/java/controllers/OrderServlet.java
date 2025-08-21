@@ -8,9 +8,11 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import models.Order;
 import models.OrderItem;
+import models.User;
 
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.sql.SQLException;
 import java.util.Base64;
 import java.util.HashMap;
 import java.util.List;
@@ -167,12 +169,58 @@ public class OrderServlet extends HttpServlet {
 	        }
 		
 	}
-
-
-	private void GetAllOrders(HttpServletRequest request, HttpServletResponse response) {
-		// TODO Auto-generated method stub
+	private String getUid(String id) {
 		
+		int idInt;
+		try {
+			idInt = Integer.parseInt(id);
+		} catch (NumberFormatException e) {
+			throw new IllegalArgumentException("ID must be a non-negative integer");
+		}
+		
+		if (id == null || id.isEmpty()) {
+			throw new IllegalArgumentException("ID must be a non-negative integer");
+		}
+		return "p" + String.format("%03d", idInt); // Format ID as "pXX" where XX is the zero-padded integer
 	}
+
+
+	private void GetAllOrders(HttpServletRequest request, HttpServletResponse response) throws IOException {
+        response.setContentType("application/json");
+        response.setCharacterEncoding("UTF-8");
+        
+        Gson gson = new Gson();
+        Map<String, Object> jsonResponse = new HashMap<>();
+        User user = (User) request.getSession().getAttribute("user");
+        
+        try {
+            OrderDao orderDao = new OrderDao();
+            List<Order> orders = orderDao.getAllOrders(getUid(user.getId()));
+            
+            if (orders != null && !orders.isEmpty()) {
+                jsonResponse.put("success", true);
+                jsonResponse.put("orders", orders);
+            } else {
+                jsonResponse.put("success", false);
+                jsonResponse.put("message", "No orders found.");
+            }
+        } catch (ClassNotFoundException | SQLException e) {
+            e.printStackTrace();
+            jsonResponse.put("success", false);
+            jsonResponse.put("message", "Database error: " + e.getMessage());
+            response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+        } catch (Exception e) {
+            e.printStackTrace();
+            jsonResponse.put("success", false);
+            jsonResponse.put("message", "Error retrieving orders: " + e.getMessage());
+            response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+        }
+        
+        try (PrintWriter out = response.getWriter()) {
+            out.print(gson.toJson(jsonResponse));
+            out.flush();
+        }
+    }
 
 
 	private void GetInvoice(HttpServletRequest request, HttpServletResponse response) throws IOException {
@@ -209,10 +257,59 @@ public class OrderServlet extends HttpServlet {
 	}
 
 
-	private void GetOrderDetails(HttpServletRequest request, HttpServletResponse response) {
-		// TODO Auto-generated method stub
-		
-	}
+	private void GetOrderDetails(HttpServletRequest request, HttpServletResponse response) throws IOException {
+        response.setContentType("application/json");
+        response.setCharacterEncoding("UTF-8");
+        
+        Gson gson = new Gson();
+        Map<String, Object> jsonResponse = new HashMap<>();
+        
+        try {
+            String orderIdStr = request.getParameter("orderId");
+            if (orderIdStr == null || orderIdStr.trim().isEmpty()) {
+                jsonResponse.put("success", false);
+                jsonResponse.put("message", "Order ID is missing.");
+                response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+                try (PrintWriter out = response.getWriter()) {
+                    out.print(gson.toJson(jsonResponse));
+                    out.flush();
+                }
+                return;
+            }
+            
+            int orderId = Integer.parseInt(orderIdStr);
+            
+            OrderDao orderDao = new OrderDao();
+            Order order = orderDao.getOrderDetails(orderId);
+            
+            if (order != null) {
+                jsonResponse.put("success", true);
+                jsonResponse.put("order", order);
+            } else {
+                jsonResponse.put("success", false);
+                jsonResponse.put("message", "Order not found for ID: " + orderId);
+            }
+        } catch (NumberFormatException e) {
+            jsonResponse.put("success", false);
+            jsonResponse.put("message", "Invalid Order ID format.");
+            response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+        } catch (ClassNotFoundException | SQLException e) {
+            e.printStackTrace();
+            jsonResponse.put("success", false);
+            jsonResponse.put("message", "Database error: " + e.getMessage());
+            response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+        } catch (Exception e) {
+            e.printStackTrace();
+            jsonResponse.put("success", false);
+            jsonResponse.put("message", "Error retrieving order details: " + e.getMessage());
+            response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+        }
+        
+        try (PrintWriter out = response.getWriter()) {
+            out.print(gson.toJson(jsonResponse));
+            out.flush();
+        }
+    }
 
 
 	private void PlaceOrder(HttpServletRequest request, HttpServletResponse response) throws IOException {

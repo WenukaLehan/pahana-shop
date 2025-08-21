@@ -211,7 +211,7 @@
 
         window.addEventListener('DOMContentLoaded', function () {
             if (performance.navigation.type === performance.navigation.TYPE_RELOAD) {
-                window.location.href = 'index.html';
+                //window.location.href = 'index.html';
             }
         });
         

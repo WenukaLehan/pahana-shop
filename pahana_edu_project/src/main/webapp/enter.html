@@ -7,7 +7,10 @@
     <meta name="description" content="Pahana Edu - Your trusted online book shop offering curated educational books">
     <meta name="keywords" content="books, education, online book shop, Pahana Edu">
     <meta name="author" content="Pahana Edu">
-    <title>Pahana Edu - Book Shop</title>
+    <link rel="icon" href="./images/icont.png" type="image/x-icon">
+    <title>Pahana EDU | MainPage</title>
+    
+     <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
     
     <!-- Bootstrap CSS -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
@@ -44,7 +47,7 @@
                     <li class="nav-item"><a class="nav-link" href="#about">About</a></li>
                     <li class="nav-item"><a class="nav-link" href="#contact">Contact</a></li>
                     <li class="nav-item">
-                        <button class="btn login-btn"><i class="fas fa-user me-2"></i>Login</button>
+                        <button onclick="goLogin()" class="btn login-btn"><i class="fas fa-user me-2"></i>Login</button>
                     </li>
                 </ul>
             </div>
@@ -236,6 +239,9 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/aos/2.3.4/aos.js"></script>
 
     <script>
+        function goLogin() {
+            window.location.href = 'Login.jsp';
+        }
         // Initialize AOS
         AOS.init({
             duration: 1000,
@@ -243,97 +249,7 @@
             offset: 100
         });
 
-        // Books Data
-        const booksData = [
-            {
-                id: 1,
-                title: "Science Essentials",
-                description: "A comprehensive guide to core scientific concepts.",
-                rating: 5,
-                subject: "SCIENCE",
-                color: "linear-gradient(145deg, #4a90e2, #5dade2)",
-                category: "Science",
-                format: "Hardcover",
-                pages: "320 pages"
-            },
-            {
-                id: 2,
-                title: "History Unveiled",
-                description: "Dive into the past with this detailed exploration.",
-                rating: 4,
-                subject: "HISTORY",
-                color: "linear-gradient(145deg, #e74c3c, #c0392b)",
-                category: "History",
-                format: "Paperback",
-                pages: "450 pages"
-            },
-            {
-                id: 3,
-                title: "Mathematics Made Simple",
-                description: "Master complex mathematical concepts.",
-                rating: 5,
-                subject: "MATH",
-                color: "linear-gradient(145deg, #f39c12, #e67e22)",
-                category: "Mathematics",
-                format: "E-book",
-                pages: "280 pages"
-            },
-            {
-                id: 4,
-                title: "Language Learning Guide",
-                description: "A practical guide to learning new languages.",
-                rating: 4,
-                subject: "LANG",
-                color: "linear-gradient(145deg, #9b59b6, #8e44ad)",
-                category: "Languages",
-                format: "Paperback",
-                pages: "200 pages"
-            },
-            {
-                id: 5,
-                title: "Physics Fundamentals",
-                description: "Explore the laws of physics with clear explanations.",
-                rating: 5,
-                subject: "PHYSICS",
-                color: "linear-gradient(145deg, #1abc9c, #16a085)",
-                category: "Physics",
-                format: "Hardcover",
-                pages: "350 pages"
-            },
-            {
-                id: 6,
-                title: "Biology Basics",
-                description: "A detailed journey through ecosystems.",
-                rating: 4,
-                subject: "BIO",
-                color: "linear-gradient(145deg, #27ae60, #229954)",
-                category: "Biology",
-                format: "E-book",
-                pages: "300 pages"
-            },
-            {
-                id: 7,
-                title: "Chemistry Core",
-                description: "Understand chemical reactions and compounds.",
-                rating: 5,
-                subject: "CHEM",
-                color: "linear-gradient(145deg, #e67e22, #d35400)",
-                category: "Chemistry",
-                format: "Hardcover",
-                pages: "400 pages"
-            },
-            {
-                id: 8,
-                title: "Art & Culture",
-                description: "Discover the world of art through history.",
-                rating: 4,
-                subject: "ART",
-                color: "linear-gradient(145deg, #e91e63, #ad1457)",
-                category: "Arts",
-                format: "Paperback",
-                pages: "250 pages"
-            }
-        ];
+        let booksData = [];
 
         let currentBookIndex = 0;
         const booksPerLoad = 4;
@@ -393,19 +309,20 @@
             colDiv.className = 'col-lg-3 col-md-6 mb-4';
             colDiv.innerHTML = `
                 <div class="book-card" data-aos="fade-up" data-aos-delay="${index * 100}">
-                    <div class="book-cover" style="background: ${book.color}" data-subject="${book.subject}"></div>
+                  
+                    <img class="book-cover" src="GetProImage?bookId=${book.id}&action=book" >
                     <h5>${book.title}</h5>
                     <p>${book.description}</p>
                     <div class="book-meta mb-2">
                         <small class="text-warning">
-                            <i class="fas fa-tag me-1"></i>${book.category} |
-                            <i class="fas fa-book me-1"></i>${book.format} |
-                            <i class="fas fa-file-alt me-1"></i>${book.pages}
+                            <i class="fas fa-user me-1"></i>${book.author} |
+                            <i class="fas fa-dollar-sign me-1"></i>Rs: ${book.price} |
+                            <i class="fas fa-boxes me-1"></i>${book.stock} in stock
                         </small>
                     </div>
-                    <div class="book-rating">${generateStarRating(book.rating)}</div>
+                    <div class="book-rating">${generateStarRating(book.rating || 4)}</div>
                     <button class="btn btn-outline-warning btn-sm mt-2 book-action-btn" onclick="openBookDetail(${book.id})">
-                        <i class="fas fa-shopping-cart me-1"></i>Add to Cart
+                        <i class="fas fa-shopping-cart me-1"></i>Show Details
                     </button>
                 </div>
             `;
@@ -435,25 +352,23 @@
                             <div class="modal-body">
                                 <div class="row">
                                     <div class="col-md-4">
-                                        <div class="book-cover mx-auto" style="background: ${book.color}" data-subject="${book.subject}"></div>
+                                        
+                                        <img class="book-cover mx-auto" src="GetProImage?bookId=${book.id}&action=book" alt="${book.title}">
                                     </div>
                                     <div class="col-md-8">
                                         <h6 class="text-warning">About This Book</h6>
                                         <p>${book.description}</p>
                                         <div class="book-details">
-                                            <p><i class="fas fa-tag text-warning me-2"></i><strong>Category:</strong> ${book.category}</p>
-                                            <p><i class="fas fa-book text-warning me-2"></i><strong>Format:</strong> ${book.format}</p>
-                                            <p><i class="fas fa-file-alt text-warning me-2"></i><strong>Pages:</strong> ${book.pages}</p>
-                                            <p><i class="fas fa-star text-warning me-2"></i><strong>Rating:</strong> ${generateStarRating(book.rating)}</p>
+                                            <p><i class="fas fa-user text-warning me-2"></i><strong>Author:</strong> ${book.author}</p>
+                                            <p><i class="fas fa-dollar-sign text-warning me-2"></i><strong>Price:</strong> Rs: ${book.price}</p>
+                                            <p><i class="fas fa-boxes text-warning me-2"></i><strong>Stock:</strong> ${book.stock} in stock</p>
                                         </div>
                                     </div>
                                 </div>
                             </div>
                             <div class="modal-footer border-top-0">
                                 <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Close</button>
-                                <button type="button" class="btn btn-warning">
-                                    <i class="fas fa-shopping-cart me-2"></i>Add to Cart
-                                </button>
+                                
                             </div>
                         </div>
                     </div>
@@ -527,10 +442,59 @@
                 window.scrollTo({ top: 0, behavior: 'smooth' });
             }, 600);
         });
+        
+        function fetchBooks() {
+            const loadingSpinner = document.querySelector('.loading-spinner');
+            const loadingText = loadingSpinner.nextElementSibling;
+            loadingSpinner.style.display = 'block';
+            loadingText.style.display = 'block';
+
+            $.post('BookServlet', { action: 'listBooks' }, function(data) {
+                const container = document.getElementById('booksContainer');
+                const loadingSpinner = document.querySelector('.loading-spinner');
+                const loadingText = loadingSpinner.nextElementSibling;
+
+                if (data.success && Array.isArray(data.books) && data.books.length > 0) {
+                    booksData = data.books.map(book => ({
+                        id: book.id,
+                        title: book.title,
+                        description: book.description,
+                        author: book.author,
+                        price: book.price,
+                        stock: book.stock,
+                        color: book.color || 'linear-gradient(145deg, #4a90e2, #5dade2)',
+                        rating: book.rating || 4 // Fallback rating if not provided by the servlet
+                    }));
+                    
+                    loadingSpinner.style.display = 'none';
+                    loadingText.style.display = 'none';
+                    loadBooks(0, booksPerLoad);
+
+                } else {
+                    console.error('No books found or error fetching books.');
+                    container.innerHTML = `<div class="col-12 text-center text-warning" data-aos="fade-up">
+                                            <p>Sorry, we couldn't load any books at this time. Please try again later!</p>
+                                          </div>`;
+                    loadingSpinner.style.display = 'none';
+                    loadingText.style.display = 'none';
+                }
+            }, 'json').fail(function() {
+                const container = document.getElementById('booksContainer');
+                const loadingSpinner = document.querySelector('.loading-spinner');
+                const loadingText = loadingSpinner.nextElementSibling;
+                console.error('Failed to connect to the server or process the response.');
+                container.innerHTML = `<div class="col-12 text-center text-danger" data-aos="fade-up">
+                                        <p>Failed to connect to the server. Please check your network connection.</p>
+                                      </div>`;
+                loadingSpinner.style.display = 'none';
+                loadingText.style.display = 'none';
+            });
+        }
 
         document.addEventListener('DOMContentLoaded', () => {
             createParticles();
-            setTimeout(() => loadBooks(0, booksPerLoad), 1000);
+            fetchBooks();
+            //setTimeout(() => loadBooks(0, booksPerLoad), 1000);
             setTimeout(() => document.querySelector('.navbar').style.transform = 'translateY(0)', 500);
         });
 
