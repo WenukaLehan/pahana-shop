@@ -24,8 +24,8 @@ public class EmailSender {
 
 
 	public static void sendEmail(String to, String subject, String body, HttpServletRequest request) throws Exception {
-        final String fromEmail = "wmwenuka@gmail.com";
-        final String password = "pikg qmat srqe mcpp";
+        final String fromEmail = "";
+        final String password = "";
 
         Properties props = new Properties();
         props.put("mail.smtp.auth", "true");
@@ -67,8 +67,8 @@ public class EmailSender {
     }
 	
 	public static void sendEmailWithAttachment(String to, String subject, String body, String filePath,HttpServletRequest request) throws Exception {
-        final String fromEmail = "wmwenuka@gmail.com";
-        final String password = "pikg qmat srqe mcpp";
+        final String fromEmail = "";
+        final String password = "";
 
         Properties props = new Properties();
         props.put("mail.smtp.auth", "true");
@@ -115,8 +115,8 @@ public class EmailSender {
         Transport.send(message);
     }
 	
-    private static final String SMTP_USER = "wmwenuka@gmail.com";
-    private static final String SMTP_PASS = "pikg qmat srqe mcpp"; // This is an example App Password
+    private static final String SMTP_USER = "";
+    private static final String SMTP_PASS = ""; // This is an example App Password
     private static final String SMTP_HOST = "smtp.gmail.com";
     private static final String SMTP_PORT = "587"; // Standard TLS port for SMTP
 
